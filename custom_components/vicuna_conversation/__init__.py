@@ -6,14 +6,19 @@ import logging
 from typing import Literal
 
 import openai
-from openai import error
 
 from homeassistant.components import conversation
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY, MATCH_ALL
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady, TemplateError
-from homeassistant.helpers import intent, template
+from homeassistant.helpers import (
+    config_validation as cv,
+    intent,
+    issue_registry as ir,
+    selector,
+    template,
+)
 from homeassistant.util import ulid
 
 from .const import (
@@ -23,6 +28,7 @@ from .const import (
     CONF_TEMPERATURE,
     CONF_TOP_P,
     CONF_BASE_URL,
+    DOMAIN,
     DEFAULT_CHAT_MODEL,
     DEFAULT_MAX_TOKENS,
     DEFAULT_PROMPT,
@@ -36,18 +42,16 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up OpenAI Conversation from a config entry."""
-    openai.api_key = entry.data[CONF_API_KEY]
-    openai.api_base = entry.data[CONF_BASE_URL]
+    client = openai.AsyncOpenAI(api_key=entry.data[CONF_API_KEY], base_url=entry.data[CONF_BASE_URL])
 
     try:
-        await hass.async_add_executor_job(
-            partial(openai.Model.list)
-        )
-    except error.AuthenticationError as err:
+        await hass.async_add_executor_job(client.with_options(timeout=10.0).models.list)
+    except openai.AuthenticationError as err:
         _LOGGER.error("Invalid API key: %s", err)
         return False
-    except error.OpenAIError as err:
+    except openai.OpenAIError as err:
         raise ConfigEntryNotReady(err) from err
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = client
 
     conversation.async_set_agent(hass, entry, OpenAIAgent(hass, entry))
     return True
@@ -113,8 +117,9 @@ class OpenAIAgent(conversation.AbstractConversationAgent):
 
         _LOGGER.debug("Prompt for %s: %s", model, messages)
 
+        client = self.hass.data[DOMAIN][self.entry.entry_id]
         try:
-            result = await openai.ChatCompletion.acreate(
+            result = await client.chat.completions.create(
                 model=model,
                 messages=messages,
                 max_tokens=max_tokens,
@@ -122,7 +127,7 @@ class OpenAIAgent(conversation.AbstractConversationAgent):
                 temperature=temperature,
                 user=conversation_id,
             )
-        except error.OpenAIError as err:
+        except openai.OpenAIError as err:
             intent_response = intent.IntentResponse(language=user_input.language)
             intent_response.async_set_error(
                 intent.IntentResponseErrorCode.UNKNOWN,
@@ -133,7 +138,7 @@ class OpenAIAgent(conversation.AbstractConversationAgent):
             )
 
         _LOGGER.debug("Response %s", result)
-        response = result["choices"][0]["message"]
+        response = result.choices[0].message.model_dump(include={"role", "content"})
         messages.append(response)
         self.history[conversation_id] = messages
 
