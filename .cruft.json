@@ -1,0 +1,19 @@
+{
+  "template": "http://github.com/allenporter/cookiecutter-home-assistant-custom-component",
+  "commit": "00cf0c4131ec7a32997019b9c7b11ec014e2cc2a",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "full_name": "Allen Porter",
+      "email": "allen.porter@gmail.com",
+      "github_username": "allenporter",
+      "project_name": "vicuna-conversation",
+      "domain": "vicuna_conversation",
+      "name": "Custom OpenAI Conversation",
+      "description": "Conversation support for home assistant using vicuna local llm",
+      "version": "0.8.0",
+      "_template": "http://github.com/allenporter/cookiecutter-home-assistant-custom-component"
+    }
+  },
+  "directory": null
+}

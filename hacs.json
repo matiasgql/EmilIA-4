@@ -1,6 +1,4 @@
 {
   "name": "Custom OpenAI Conversation",
-  "render_readme": true,
-  "homeassistant": "2023.8.0",
-  "topics": ["conversation"]
+  "homeassistant": "2024.04.00"
 }

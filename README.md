@@ -1,14 +1,8 @@
 # hass-openai-custom-conversation
 
-Conversation support for home assistant using local llm for example vicuna or something else
+Conversation support for home assistant using local llm for example vicuna or something else.
 
-How to setup your own local LLM for Home assistant:
-
-- Install local-ai
-- Setup model
-- Install hass-openai-custom-conversation
-- Add custom component to your hass installation
-- Set first field to any string, set second field to the address of local-ai installation
-- Configure hass assist to use custom openai conversation as conversation agent, set options to contain instructions specific to your setup and model name
-
-Discussion here https://community.home-assistant.io/t/integration-with-localai/575238/13
+This is a fork of https://github.com/drndos/hass-openai-custom-conversation which
+has been updated to follow the latest updates from the core repo. The Ollama
+integration is preferred, but this is used for exercising lower level use cases
+with custom LLMs not supported by Ollama.
