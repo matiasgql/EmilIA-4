@@ -1,13 +1,13 @@
 {
+  "domain": "vicuna_conversation",
+  "name": "Custom OpenAI Conversation",
   "codeowners": ["@allenporter"],
   "config_flow": true,
   "dependencies": ["conversation"],
   "documentation": "https://github.com/allenporter/hass-openai-custom-conversation",
-  "domain": "vicuna_conversation",
   "integration_type": "service",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/allenporter/hass-openai-custom-conversation/issues",
-  "name": "Custom OpenAI Conversation",
   "requirements": ["openai==1.3.8"],
   "version": "0.8.0"
 }
