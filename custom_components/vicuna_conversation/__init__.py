@@ -1,7 +1,7 @@
 """The OpenAI Conversation integration."""
+
 from __future__ import annotations
 
-from functools import partial
 import logging
 from typing import Literal
 
@@ -13,10 +13,7 @@ from homeassistant.const import CONF_API_KEY, MATCH_ALL
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady, TemplateError
 from homeassistant.helpers import (
-    config_validation as cv,
     intent,
-    issue_registry as ir,
-    selector,
     template,
 )
 from homeassistant.util import ulid
@@ -42,7 +39,9 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up OpenAI Conversation from a config entry."""
-    client = openai.AsyncOpenAI(api_key=entry.data[CONF_API_KEY], base_url=entry.data[CONF_BASE_URL])
+    client = openai.AsyncOpenAI(
+        api_key=entry.data[CONF_API_KEY], base_url=entry.data[CONF_BASE_URL]
+    )
 
     try:
         await hass.async_add_executor_job(client.with_options(timeout=10.0).models.list)
@@ -77,7 +76,10 @@ class OpenAIAgent(conversation.AbstractConversationAgent):
     @property
     def attribution(self):
         """Return the attribution."""
-        return {"name": "Powered by Custom LLM", "url": "https://github.com/drndos/hass-openai-custom-conversation"}
+        return {
+            "name": "Powered by Custom LLM",
+            "url": "https://github.com/drndos/hass-openai-custom-conversation",
+        }
 
     @property
     def supported_languages(self) -> list[str] | Literal["*"]:
