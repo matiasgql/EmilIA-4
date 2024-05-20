@@ -1,7 +1,7 @@
 """Config flow for OpenAI Conversation integration."""
+
 from __future__ import annotations
 
-from functools import partial
 import logging
 import types
 from types import MappingProxyType
@@ -64,8 +64,11 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> None:
 
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
     """
-    client = openai.AsyncOpenAI(api_key=data[CONF_API_KEY], base_url=data[CONF_BASE_URL])
+    client = openai.AsyncOpenAI(
+        api_key=data[CONF_API_KEY], base_url=data[CONF_BASE_URL]
+    )
     await hass.async_add_executor_job(client.with_options(timeout=10.0).models.list)
+
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for OpenAI Conversation."""
@@ -74,7 +77,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> config_entries.ConfigFlowResult:
         """Handle the initial step."""
         if user_input is None:
             return self.async_show_form(
@@ -93,7 +96,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.exception("Unexpected exception")
             errors["base"] = "unknown"
         else:
-            return self.async_create_entry(title="Custom OpenAI Conversation", data=user_input)
+            return self.async_create_entry(
+                title="Custom OpenAI Conversation", data=user_input
+            )
 
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
@@ -119,7 +124,9 @@ class OptionsFlow(config_entries.OptionsFlow):
     ) -> FlowResult:
         """Manage the options."""
         if user_input is not None:
-            return self.async_create_entry(title="Custom OpenAI Conversation", data=user_input)
+            return self.async_create_entry(
+                title="Custom OpenAI Conversation", data=user_input
+            )
         schema = openai_config_option_schema(self.config_entry.options)
         return self.async_show_form(
             step_id="init",

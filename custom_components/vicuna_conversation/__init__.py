@@ -31,7 +31,6 @@ from .const import (
     DEFAULT_PROMPT,
     DEFAULT_TEMPERATURE,
     DEFAULT_TOP_P,
-    DEFAULT_BASE_URL,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -58,8 +57,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload OpenAI."""
-    openai.api_key = None
-    openai.api_base = DEFAULT_BASE_URL
     conversation.async_unset_agent(hass, entry)
     return True
 
@@ -74,11 +71,11 @@ class OpenAIAgent(conversation.AbstractConversationAgent):
         self.history: dict[str, list[dict]] = {}
 
     @property
-    def attribution(self):
+    def attribution(self) -> dict[str, str]:
         """Return the attribution."""
         return {
             "name": "Powered by Custom LLM",
-            "url": "https://github.com/drndos/hass-openai-custom-conversation",
+            "url": "https://github.com/allenporter/hass-openai-custom-conversation",
         }
 
     @property
@@ -152,9 +149,10 @@ class OpenAIAgent(conversation.AbstractConversationAgent):
 
     def _async_generate_prompt(self, raw_prompt: str) -> str:
         """Generate a prompt for the user."""
-        return template.Template(raw_prompt, self.hass).async_render(
+        result = template.Template(raw_prompt, self.hass).async_render(
             {
                 "ha_name": self.hass.config.location_name,
             },
             parse_result=False,
         )
+        return str(result)
