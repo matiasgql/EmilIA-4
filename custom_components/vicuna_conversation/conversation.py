@@ -1,20 +1,23 @@
 """The OpenAI Conversation integration."""
 
-from __future__ import annotations
 
+import json
 import logging
-from typing import Literal
+from typing import Literal, Any
 
 import openai
+import voluptuous as vol
+from voluptuous_openapi import convert
 
 from homeassistant.components import conversation, assist_pipeline
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import MATCH_ALL
+from homeassistant.const import MATCH_ALL, CONF_LLM_HASS_API
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import TemplateError
+from homeassistant.exceptions import TemplateError, HomeAssistantError
 from homeassistant.helpers import (
     intent,
     template,
+    llm,
 )
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import ulid
@@ -36,6 +39,10 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
+# Max number of back and forth with the LLM to generate a response
+MAX_TOOL_ITERATIONS = 10
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -44,6 +51,15 @@ async def async_setup_entry(
     """Set up conversation entities."""
     agent = OpenAIConversationEntity(config_entry)
     async_add_entities([agent])
+
+
+def _format_tool(tool: llm.Tool) -> dict[str, Any]:
+    """Format tool specification."""
+    tool_spec = {"name": tool.name}
+    if tool.description:
+        tool_spec["description"] = tool.description
+    tool_spec["parameters"] = convert(tool.parameters)
+    return {"type": "function", "function": tool_spec}
 
 
 class OpenAIConversationEntity(
@@ -87,6 +103,27 @@ class OpenAIConversationEntity(
         self, user_input: conversation.ConversationInput
     ) -> conversation.ConversationResult:
         """Process a sentence."""
+        intent_response = intent.IntentResponse(language=user_input.language)
+        llm_api: llm.API | None = None
+        tools: list[dict[str, Any]] | None = None
+
+        if self.entry.options.get(CONF_LLM_HASS_API):
+            try:
+                llm_api = llm.async_get_api(
+                    self.hass, self.entry.options[CONF_LLM_HASS_API]
+                )
+            except HomeAssistantError as err:
+                _LOGGER.error("Error getting LLM API: %s", err)
+                intent_response.async_set_error(
+                    intent.IntentResponseErrorCode.UNKNOWN,
+                    f"Error preparing LLM API: {err}",
+                )
+                return conversation.ConversationResult(
+                    response=intent_response, conversation_id=user_input.conversation_id
+                )
+            tools = [_format_tool(tool) for tool in llm_api.async_get_tools()]
+
+
         raw_prompt = self.entry.options.get(CONF_PROMPT, DEFAULT_PROMPT)
         model = self.entry.options.get(CONF_CHAT_MODEL, DEFAULT_CHAT_MODEL)
         max_tokens = self.entry.options.get(CONF_MAX_TOKENS, DEFAULT_MAX_TOKENS)
@@ -99,7 +136,10 @@ class OpenAIConversationEntity(
         else:
             conversation_id = ulid.ulid()
             try:
-                prompt = self._async_generate_prompt(raw_prompt)
+                prompt = self._async_generate_prompt(
+                    raw_prompt,
+                    llm_api,
+                )
             except TemplateError as err:
                 _LOGGER.error("Error rendering prompt: %s", err)
                 intent_response = intent.IntentResponse(language=user_input.language)
@@ -117,38 +157,88 @@ class OpenAIConversationEntity(
         _LOGGER.debug("Prompt for %s: %s", model, messages)
 
         client = self.hass.data[DOMAIN][self.entry.entry_id]
-        try:
-            result = await client.chat.completions.create(
-                model=model,
-                messages=messages,
-                max_tokens=max_tokens,
-                top_p=top_p,
-                temperature=temperature,
-                user=conversation_id,
-            )
-        except openai.OpenAIError as err:
-            intent_response = intent.IntentResponse(language=user_input.language)
-            intent_response.async_set_error(
-                intent.IntentResponseErrorCode.UNKNOWN,
-                f"Sorry, I had a problem talking to Custom OpenAI compatible server: {err}",
-            )
-            return conversation.ConversationResult(
-                response=intent_response, conversation_id=conversation_id
-            )
+        # To prevent infinite loops, we limit the number of iterations
+        for _iteration in range(MAX_TOOL_ITERATIONS):
+            try:
+                result = await client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    tools=tools,
+                    max_tokens=max_tokens,
+                    top_p=top_p,
+                    temperature=temperature,
+                    user=conversation_id,
+                )
+            except openai.OpenAIError as err:
+                intent_response = intent.IntentResponse(language=user_input.language)
+                intent_response.async_set_error(
+                    intent.IntentResponseErrorCode.UNKNOWN,
+                    f"Sorry, I had a problem talking to OpenAI: {err}",
+                )
+                return conversation.ConversationResult(
+                    response=intent_response, conversation_id=conversation_id
+                )
 
-        _LOGGER.debug("Response %s", result)
-        response = result.choices[0].message.model_dump(include={"role", "content"})
-        messages.append(response)
+            _LOGGER.debug("Response %s", result)
+            response = result.choices[0].message
+            messages.append(response)
+            tool_calls = response.tool_calls
+
+            if not tool_calls or not llm_api:
+                break
+
+            for tool_call in tool_calls:
+                tool_input = llm.ToolInput(
+                    tool_name=tool_call.function.name,
+                    tool_args=json.loads(tool_call.function.arguments),
+                    platform=DOMAIN,
+                    context=user_input.context,
+                    user_prompt=user_input.text,
+                    language=user_input.language,
+                    assistant=conversation.DOMAIN,
+                    device_id=user_input.device_id,
+                )
+                _LOGGER.debug(
+                    "Tool call: %s(%s)", tool_input.tool_name, tool_input.tool_args
+                )
+
+                try:
+                    tool_response = await llm_api.async_call_tool(tool_input)
+                except (HomeAssistantError, vol.Invalid) as e:
+                    tool_response = {"error": type(e).__name__}
+                    if str(e):
+                        tool_response["error_text"] = str(e)
+
+                _LOGGER.debug("Tool response: %s", tool_response)
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "name": tool_call.function.name,
+                        "content": json.dumps(tool_response),
+                    }
+                )
+
         self.history[conversation_id] = messages
 
         intent_response = intent.IntentResponse(language=user_input.language)
-        intent_response.async_set_speech(response["content"])
+        intent_response.async_set_speech(response.content)
         return conversation.ConversationResult(
             response=intent_response, conversation_id=conversation_id
         )
 
-    def _async_generate_prompt(self, raw_prompt: str) -> str:
+    def _async_generate_prompt(
+        self,
+        raw_prompt: str,
+        llm_api: llm.API | None,
+    ) -> str:
         """Generate a prompt for the user."""
+        raw_prompt += "\n"
+        if llm_api:
+            raw_prompt += llm_api.prompt_template
+        else:
+            raw_prompt += llm.PROMPT_NO_API_CONFIGURED
+
         result = template.Template(raw_prompt, self.hass).async_render(
             {
                 "ha_name": self.hass.config.location_name,

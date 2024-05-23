@@ -1,5 +1,5 @@
 # serializer version: 1
-# name: test_conversation_entity[None]
+# name: test_conversation_entity[config_entry_options0-None]
   list([
     dict({
       'content': '''
@@ -10,6 +10,8 @@
         Answer the user's questions about the world truthfully.
         
         If the user wants to control a device, reject the request and suggest using the Home Assistant app.
+        
+        Call the intent tools to control the system. Just pass the name to the intent.
       ''',
       'role': 'system',
     }),
@@ -17,13 +19,10 @@
       'content': 'hello',
       'role': 'user',
     }),
-    dict({
-      'content': 'Hello, how can I help you?',
-      'role': 'assistant',
-    }),
+    ChatCompletionMessage(content='Hello, how can I help you?', role='assistant', function_call=None, tool_calls=None),
   ])
 # ---
-# name: test_conversation_entity[conversation.mock_title]
+# name: test_conversation_entity[config_entry_options0-conversation.mock_title]
   list([
     dict({
       'content': '''
@@ -34,6 +33,8 @@
         Answer the user's questions about the world truthfully.
         
         If the user wants to control a device, reject the request and suggest using the Home Assistant app.
+        
+        Call the intent tools to control the system. Just pass the name to the intent.
       ''',
       'role': 'system',
     }),
@@ -41,9 +42,55 @@
       'content': 'hello',
       'role': 'user',
     }),
-    dict({
-      'content': 'Hello, how can I help you?',
-      'role': 'assistant',
-    }),
+    ChatCompletionMessage(content='Hello, how can I help you?', role='assistant', function_call=None, tool_calls=None),
   ])
+# ---
+# name: test_conversation_entity[config_entry_options1-None]
+  list([
+    dict({
+      'content': '''
+        This smart home is controlled by Home Assistant.
+        
+        An overview of the areas and the devices in this smart home:
+        
+        Answer the user's questions about the world truthfully.
+        
+        If the user wants to control a device, reject the request and suggest using the Home Assistant app.
+        
+        Call the intent tools to control the system. Just pass the name to the intent.
+      ''',
+      'role': 'system',
+    }),
+    dict({
+      'content': 'hello',
+      'role': 'user',
+    }),
+    ChatCompletionMessage(content='Hello, how can I help you?', role='assistant', function_call=None, tool_calls=None),
+  ])
+# ---
+# name: test_conversation_entity[config_entry_options1-conversation.mock_title]
+  list([
+    dict({
+      'content': '''
+        This smart home is controlled by Home Assistant.
+        
+        An overview of the areas and the devices in this smart home:
+        
+        Answer the user's questions about the world truthfully.
+        
+        If the user wants to control a device, reject the request and suggest using the Home Assistant app.
+        
+        Call the intent tools to control the system. Just pass the name to the intent.
+      ''',
+      'role': 'system',
+    }),
+    dict({
+      'content': 'hello',
+      'role': 'user',
+    }),
+    ChatCompletionMessage(content='Hello, how can I help you?', role='assistant', function_call=None, tool_calls=None),
+  ])
+# ---
+# name: test_unknown_hass_api
+  ConversationResult(response=<homeassistant.helpers.intent.IntentResponse object at 0x7f9fcc97cb00>, conversation_id=None)
 # ---

@@ -6,7 +6,8 @@ from unittest.mock import patch
 
 import pytest
 
-from homeassistant.const import Platform
+from homeassistant.const import CONF_LLM_HASS_API, Platform
+from homeassistant.helpers import llm
 from homeassistant.core import HomeAssistant
 from homeassistant.setup import async_setup_component
 
@@ -56,10 +57,10 @@ async def mock_setup_integration(
         yield
 
 
-@pytest.fixture(name="config_entry")
-async def mock_config_entry(
+@pytest.fixture(name="mock_config_entry")
+async def mock_config_entry_fixture(
     hass: HomeAssistant,
-) -> Generator[MockConfigEntry, None, None]:
+) -> MockConfigEntry:
     """Fixture to create a configuration entry."""
     config_entry = MockConfigEntry(
         data={
@@ -70,7 +71,13 @@ async def mock_config_entry(
         options={},
     )
     config_entry.add_to_hass(hass)
-    assert await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
-    yield config_entry
-    # await hass.config_entries.async_unload(config_entry.entry_id)
+    return config_entry
+
+
+@pytest.fixture
+def mock_config_entry_with_assist(hass: HomeAssistant, mock_config_entry: MockConfigEntry) -> MockConfigEntry:
+    """Mock a config entry with assist."""
+    hass.config_entries.async_update_entry(
+        mock_config_entry, options={CONF_LLM_HASS_API: llm.LLM_API_ASSIST}
+    )
+    return mock_config_entry

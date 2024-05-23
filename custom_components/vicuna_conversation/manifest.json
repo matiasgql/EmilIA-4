@@ -8,6 +8,6 @@
   "integration_type": "service",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/allenporter/hass-openai-custom-conversation/issues",
-  "requirements": ["openai==1.3.8"],
+  "requirements": ["openai==1.3.8", "voluptuous_openapi==0.0.4"],
   "version": "0.8.0"
 }
