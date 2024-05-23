@@ -61,12 +61,9 @@ class OpenAIConversationEntity(
         self._attr_unique_id = entry.entry_id
 
     @property
-    def attribution(self) -> dict[str, str]:
+    def attribution(self) -> str | None:
         """Return the attribution."""
-        return {
-            "name": "Powered by Custom LLM",
-            "url": "https://github.com/allenporter/hass-openai-custom-conversation",
-        }
+        return "Powered by Custom LLM"
 
     @property
     def supported_languages(self) -> list[str] | Literal["*"]:
