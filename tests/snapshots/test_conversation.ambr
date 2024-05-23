@@ -1,14 +1,38 @@
 # serializer version: 1
+# name: test_conversation_entity
+  list([
+    dict({
+      'content': '''
+        This smart home is controlled by Home Assistant.
+
+        An overview of the areas and the devices in this smart home:
+
+        Answer the user's questions about the world truthfully.
+
+        If the user wants to control a device, reject the request and suggest using the Home Assistant app.
+      ''',
+      'role': 'system',
+    }),
+    dict({
+      'content': 'hello',
+      'role': 'user',
+    }),
+    dict({
+      'content': 'Hello, how can I help you?',
+      'role': 'assistant',
+    }),
+  ])
+# ---
 # name: test_conversation_entity[None]
   list([
     dict({
       'content': '''
         This smart home is controlled by Home Assistant.
-        
+
         An overview of the areas and the devices in this smart home:
-        
+
         Answer the user's questions about the world truthfully.
-        
+
         If the user wants to control a device, reject the request and suggest using the Home Assistant app.
       ''',
       'role': 'system',
@@ -28,11 +52,11 @@
     dict({
       'content': '''
         This smart home is controlled by Home Assistant.
-        
+
         An overview of the areas and the devices in this smart home:
-        
+
         Answer the user's questions about the world truthfully.
-        
+
         If the user wants to control a device, reject the request and suggest using the Home Assistant app.
       ''',
       'role': 'system',

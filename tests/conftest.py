@@ -59,7 +59,7 @@ async def mock_setup_integration(
 @pytest.fixture(name="config_entry")
 async def mock_config_entry(
     hass: HomeAssistant,
-) -> MockConfigEntry:
+) -> Generator[MockConfigEntry, None, None]:
     """Fixture to create a configuration entry."""
     config_entry = MockConfigEntry(
         data={
@@ -72,4 +72,5 @@ async def mock_config_entry(
     config_entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
-    return config_entry
+    yield config_entry
+    # await hass.config_entries.async_unload(config_entry.entry_id)

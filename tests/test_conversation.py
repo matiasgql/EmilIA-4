@@ -22,12 +22,18 @@ def mock_setup_integration(config_entry: MockConfigEntry) -> None:
     """Setup the integration"""
 
 
+@pytest.mark.parametrize("agent_id", [None, "conversation.mock_title"])
 async def test_conversation_entity(
     hass: HomeAssistant,
     config_entry: MockConfigEntry,
     snapshot: SnapshotAssertion,
+    agent_id: str,
 ) -> None:
     """Verify the conversation entity is loaded."""
+
+    if agent_id is None:
+        agent_id = config_entry.entry_id
+
     with patch(
         "openai.resources.chat.completions.AsyncCompletions.create",
         new_callable=AsyncMock,
@@ -59,7 +65,7 @@ async def test_conversation_entity(
             "hello",
             None,
             Context(),
-            agent_id=config_entry.entry_id,
+            agent_id=agent_id,
         )
 
     assert result.response.response_type == intent.IntentResponseType.ACTION_DONE
