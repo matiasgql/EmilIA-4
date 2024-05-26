@@ -34,6 +34,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         return False
     except openai.OpenAIError as err:
         raise ConfigEntryNotReady(err) from err
+
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = client
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

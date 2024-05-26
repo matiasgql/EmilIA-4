@@ -2,13 +2,29 @@
 
 from unittest.mock import patch
 
+import pytest
 
 from homeassistant import config_entries
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.core import HomeAssistant
+from homeassistant.const import CONF_LLM_HASS_API
 
+from pytest_homeassistant_custom_component.common import (
+    MockConfigEntry,
+)
 
-from custom_components.vicuna_conversation.const import DOMAIN
+from custom_components.vicuna_conversation.const import (
+    CONF_CHAT_MODEL,
+    CONF_MAX_TOKENS,
+    CONF_PROMPT,
+    CONF_RECOMMENDED,
+    CONF_TEMPERATURE,
+    CONF_TOP_P,
+    DOMAIN,
+    RECOMMENDED_CHAT_MODEL,
+    RECOMMENDED_MAX_TOKENS,
+    RECOMMENDED_TOP_P,
+)
 
 
 async def test_config_flow(
@@ -34,11 +50,110 @@ async def test_config_flow(
         await hass.async_block_till_done()
 
     assert result.get("type") is FlowResultType.CREATE_ENTRY
-    assert result.get("title") == "Custom OpenAI Conversation"
+    assert result.get("title") == "Custom OpenAI"
     assert result.get("data") == {
         "api_key": "sk-0000000000000000000",
         "base_url": "http://llama-cublas.llama:8000/v1",
     }
-
-    assert result.get("options") == {}
+    assert result.get("options") == {
+        "llm_hass_api": "assist",
+        "prompt": "Answer in plain text. Keep it simple and to the point.",
+        "recommended": True,
+    }
     assert len(mock_setup.mock_calls) == 1
+
+
+async def test_options(
+    hass: HomeAssistant,
+    mock_config_entry: MockConfigEntry,
+) -> None:
+    """Test the options form."""
+    options_flow = await hass.config_entries.options.async_init(
+        mock_config_entry.entry_id
+    )
+    options = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"],
+        {
+            "prompt": "Speak like a pirate",
+            "max_tokens": 200,
+        },
+    )
+    await hass.async_block_till_done()
+    assert options["type"] is FlowResultType.CREATE_ENTRY
+    assert options["data"]["prompt"] == "Speak like a pirate"
+    assert options["data"]["max_tokens"] == 200
+    assert options["data"][CONF_CHAT_MODEL] == RECOMMENDED_CHAT_MODEL
+
+
+@pytest.mark.parametrize(
+    ("current_options", "new_options", "expected_options"),
+    [
+        (
+            {
+                CONF_RECOMMENDED: True,
+                CONF_LLM_HASS_API: "none",
+                CONF_PROMPT: "bla",
+            },
+            {
+                CONF_RECOMMENDED: False,
+                CONF_PROMPT: "Speak like a pirate",
+                CONF_TEMPERATURE: 0.3,
+            },
+            {
+                CONF_RECOMMENDED: False,
+                CONF_PROMPT: "Speak like a pirate",
+                CONF_TEMPERATURE: 0.3,
+                CONF_CHAT_MODEL: RECOMMENDED_CHAT_MODEL,
+                CONF_TOP_P: RECOMMENDED_TOP_P,
+                CONF_MAX_TOKENS: RECOMMENDED_MAX_TOKENS,
+            },
+        ),
+        (
+            {
+                CONF_RECOMMENDED: False,
+                CONF_PROMPT: "Speak like a pirate",
+                CONF_TEMPERATURE: 0.3,
+                CONF_CHAT_MODEL: RECOMMENDED_CHAT_MODEL,
+                CONF_TOP_P: RECOMMENDED_TOP_P,
+                CONF_MAX_TOKENS: RECOMMENDED_MAX_TOKENS,
+            },
+            {
+                CONF_RECOMMENDED: True,
+                CONF_LLM_HASS_API: "assist",
+                CONF_PROMPT: "",
+            },
+            {
+                CONF_RECOMMENDED: True,
+                CONF_LLM_HASS_API: "assist",
+                CONF_PROMPT: "",
+            },
+        ),
+    ],
+)
+async def test_options_switching(
+    hass: HomeAssistant,
+    mock_config_entry: MockConfigEntry,
+    current_options: dict[str, str | bool],
+    new_options: dict[str, str | bool],
+    expected_options: dict[str, str | bool],
+) -> None:
+    """Test the options form."""
+    hass.config_entries.async_update_entry(mock_config_entry, options=current_options)
+    options_flow = await hass.config_entries.options.async_init(
+        mock_config_entry.entry_id
+    )
+    if current_options.get(CONF_RECOMMENDED) != new_options.get(CONF_RECOMMENDED):
+        options_flow = await hass.config_entries.options.async_configure(
+            options_flow["flow_id"],
+            {
+                **current_options,
+                CONF_RECOMMENDED: new_options[CONF_RECOMMENDED],
+            },
+        )
+    options = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"],
+        new_options,
+    )
+    await hass.async_block_till_done()
+    assert options["type"] is FlowResultType.CREATE_ENTRY
+    assert options["data"] == expected_options
