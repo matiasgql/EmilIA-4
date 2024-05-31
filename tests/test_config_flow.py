@@ -55,11 +55,7 @@ async def test_config_flow(
         "api_key": "sk-0000000000000000000",
         "base_url": "http://llama-cublas.llama:8000/v1",
     }
-    assert result.get("options") == {
-        "llm_hass_api": "assist",
-        "prompt": "Answer in plain text. Keep it simple and to the point.",
-        "recommended": True,
-    }
+    assert result2["options"] == RECOMMENDED_OPTIONS
     assert len(mock_setup.mock_calls) == 1
 
 

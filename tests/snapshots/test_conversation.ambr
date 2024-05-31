@@ -45,8 +45,11 @@
   list([
     dict({
       'content': '''
+        You are a voice assistant for Home Assistant.
         Answer in plain text. Keep it simple and to the point.
-        Call the intent tools to control Home Assistant. Just pass the name to the intent.
+        The current time is 21:40:25.
+        Today's date is 05/30/24.
+        Only if the user wants to control a device, tell them to expose entities to their voice assistant in Home Assistant.
       ''',
       'role': 'system',
     }),
@@ -61,8 +64,11 @@
   list([
     dict({
       'content': '''
+        You are a voice assistant for Home Assistant.
         Answer in plain text. Keep it simple and to the point.
-        Call the intent tools to control Home Assistant. Just pass the name to the intent.
+        The current time is 21:40:25.
+        Today's date is 05/30/24.
+        Only if the user wants to control a device, tell them to expose entities to their voice assistant in Home Assistant.
       ''',
       'role': 'system',
     }),
@@ -77,8 +83,11 @@
   list([
     dict({
       'content': '''
+        You are a voice assistant for Home Assistant.
         Answer in plain text. Keep it simple and to the point.
-        Call the intent tools to control Home Assistant. Just pass the name to the intent.
+        The current time is 21:40:25.
+        Today's date is 05/30/24.
+        Only if the user wants to control a device, tell them to expose entities to their voice assistant in Home Assistant.
       ''',
       'role': 'system',
     }),
@@ -93,8 +102,11 @@
   list([
     dict({
       'content': '''
+        You are a voice assistant for Home Assistant.
         Answer in plain text. Keep it simple and to the point.
-        Call the intent tools to control Home Assistant. Just pass the name to the intent.
+        The current time is 21:40:25.
+        Today's date is 05/30/24.
+        Only if the user wants to control a device, tell them to expose entities to their voice assistant in Home Assistant.
       ''',
       'role': 'system',
     }),
