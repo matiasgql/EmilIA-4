@@ -1,9 +1,9 @@
 {
   "domain": "vicuna_conversation",
   "name": "Custom OpenAI Conversation",
+  "after_dependencies": ["assist_pipeline", "intent"],
   "codeowners": ["@allenporter"],
   "config_flow": true,
-  "after_dependencies": ["assist_pipeline", "intent"],
   "documentation": "https://github.com/allenporter/hass-openai-custom-conversation",
   "integration_type": "service",
   "iot_class": "local_polling",
