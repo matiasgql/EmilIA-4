@@ -2,6 +2,7 @@
 
 from unittest.mock import AsyncMock, patch
 
+from freezegun import freeze_time
 import pytest
 from syrupy.assertion import SnapshotAssertion
 from openai.types.chat.chat_completion import ChatCompletion, Choice
@@ -24,6 +25,13 @@ from pytest_homeassistant_custom_component.common import (
     MockConfigEntry,
 )
 from custom_components.vicuna_conversation import DOMAIN
+
+
+@pytest.fixture(autouse=True)
+def freeze_the_time():
+    """Freeze the time."""
+    with freeze_time("2024-05-24 12:00:00", tz_offset=0):
+        yield
 
 
 @pytest.fixture(autouse=True)
