@@ -135,7 +135,7 @@ class OpenAIOptionsFlow(OptionsFlow):
             if user_input[CONF_RECOMMENDED] == self.last_rendered_recommended:
                 if user_input[CONF_LLM_HASS_API] == "none":
                     user_input.pop(CONF_LLM_HASS_API)
-                return self.async_create_entry(title="", data=user_input)
+                return self.async_create_entry(title="", data=user_input)  # type: ignore[no-any-return]
 
             # Re-render the options again, now with the recommended options shown/hidden
             self.last_rendered_recommended = user_input[CONF_RECOMMENDED]
