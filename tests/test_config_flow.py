@@ -9,6 +9,7 @@ from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.core import HomeAssistant
 from homeassistant.const import CONF_LLM_HASS_API
 
+
 from pytest_homeassistant_custom_component.common import (
     MockConfigEntry,
 )
@@ -25,6 +26,7 @@ from custom_components.vicuna_conversation.const import (
     RECOMMENDED_MAX_TOKENS,
     RECOMMENDED_TOP_P,
 )
+from custom_components.vicuna_conversation.config_flow import RECOMMENDED_OPTIONS
 
 
 async def test_config_flow(
@@ -55,11 +57,7 @@ async def test_config_flow(
         "api_key": "sk-0000000000000000000",
         "base_url": "http://llama-cublas.llama:8000/v1",
     }
-    assert result.get("options") == {
-        "llm_hass_api": "assist",
-        "prompt": "Answer in plain text. Keep it simple and to the point.",
-        "recommended": True,
-    }
+    assert result["options"] == RECOMMENDED_OPTIONS
     assert len(mock_setup.mock_calls) == 1
 
 

@@ -2,6 +2,7 @@
 
 from unittest.mock import AsyncMock, patch
 
+from freezegun import freeze_time
 import pytest
 from syrupy.assertion import SnapshotAssertion
 from openai.types.chat.chat_completion import ChatCompletion, Choice
@@ -24,6 +25,13 @@ from pytest_homeassistant_custom_component.common import (
     MockConfigEntry,
 )
 from custom_components.vicuna_conversation import DOMAIN
+
+
+@pytest.fixture(autouse=True)
+def freeze_the_time():
+    """Freeze the time."""
+    with freeze_time("2024-05-24 12:00:00", tz_offset=0):
+        yield
 
 
 @pytest.fixture(autouse=True)
@@ -94,8 +102,9 @@ async def test_conversation_entity(
     assert result.response.response_type == intent.IntentResponseType.ACTION_DONE
     assert mock_create.mock_calls[0][2]["messages"] == snapshot
 
+
 @patch(
-    f"custom_components.{DOMAIN}.conversation.llm.AssistAPI.async_get_tools"
+    f"custom_components.{DOMAIN}.conversation.llm.AssistAPI._async_get_tools"
 )
 async def test_function_call(
     mock_get_tools,
@@ -200,6 +209,8 @@ async def test_function_call(
         llm.ToolInput(
             tool_name="test_tool",
             tool_args={"param1": "test_value"},
+        ),
+        llm.LLMContext(
             platform="vicuna_conversation",
             context=context,
             user_prompt="Please call the test function",
@@ -211,7 +222,7 @@ async def test_function_call(
 
 
 @patch(
-    f"custom_components.{DOMAIN}.conversation.llm.AssistAPI.async_get_tools"
+    f"custom_components.{DOMAIN}.conversation.llm.AssistAPI._async_get_tools"
 )
 async def test_function_exception(
     mock_get_tools,
@@ -316,6 +327,8 @@ async def test_function_exception(
         llm.ToolInput(
             tool_name="test_tool",
             tool_args={"param1": "test_value"},
+        ),
+        llm.LLMContext(
             platform="vicuna_conversation",
             context=context,
             user_prompt="Please call the test function",
