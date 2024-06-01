@@ -210,7 +210,7 @@ async def test_function_call(
             tool_name="test_tool",
             tool_args={"param1": "test_value"},
         ),
-        llm.ToolContext(
+        llm.LLMContext(
             platform="vicuna_conversation",
             context=context,
             user_prompt="Please call the test function",
@@ -328,7 +328,7 @@ async def test_function_exception(
             tool_name="test_tool",
             tool_args={"param1": "test_value"},
         ),
-        llm.ToolContext(
+        llm.LLMContext(
             platform="vicuna_conversation",
             context=context,
             user_prompt="Please call the test function",
