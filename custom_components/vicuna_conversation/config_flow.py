@@ -97,13 +97,13 @@ class OpenAIConfigFlow(ConfigFlow, domain=DOMAIN):
             LOGGER.exception("Unexpected exception")
             errors["base"] = "unknown"
         else:
-            return self.async_create_entry(
+            return self.async_create_entry(  # type: ignore[no-any-return]
                 title="Custom OpenAI",
                 data=user_input,
                 options=RECOMMENDED_OPTIONS,
             )
 
-        return self.async_show_form(
+        return self.async_show_form(  # type: ignore[no-any-return]
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
         )
 
@@ -147,7 +147,7 @@ class OpenAIOptionsFlow(OptionsFlow):
             }
 
         schema = openai_config_option_schema(self.hass, options)
-        return self.async_show_form(
+        return self.async_show_form(  # type: ignore[no-any-return]
             step_id="init",
             data_schema=vol.Schema(schema),
         )
