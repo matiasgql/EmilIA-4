@@ -81,7 +81,7 @@ class OpenAIConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Handle the initial step."""
         if user_input is None:
-            return self.async_show_form(
+            return self.async_show_form(   # type: ignore[no-any-return]
                 step_id="user", data_schema=STEP_USER_DATA_SCHEMA
             )
 
