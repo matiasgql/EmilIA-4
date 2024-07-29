@@ -35,7 +35,9 @@ def freeze_the_time():
 
 
 @pytest.fixture(autouse=True)
-async def mock_setup_integration(hass: HomeAssistant, mock_config_entry: MockConfigEntry) -> None:
+async def mock_setup_integration(
+    hass: HomeAssistant, mock_config_entry: MockConfigEntry
+) -> None:
     """Setup the integration"""
     assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
     await hass.async_block_till_done()
@@ -103,9 +105,7 @@ async def test_conversation_entity(
     assert mock_create.mock_calls[0][2]["messages"] == snapshot
 
 
-@patch(
-    f"custom_components.{DOMAIN}.conversation.llm.AssistAPI._async_get_tools"
-)
+@patch(f"custom_components.{DOMAIN}.conversation.llm.AssistAPI._async_get_tools")
 async def test_function_call(
     mock_get_tools,
     hass: HomeAssistant,
@@ -201,7 +201,6 @@ async def test_function_call(
     assert mock_create.mock_calls[1][2]["messages"][3] == {
         "role": "tool",
         "tool_call_id": "call_AbCdEfGhIjKlMnOpQrStUvWx",
-        "name": "test_tool",
         "content": '"Test response"',
     }
     mock_tool.async_call.assert_awaited_once_with(
@@ -221,9 +220,7 @@ async def test_function_call(
     )
 
 
-@patch(
-    f"custom_components.{DOMAIN}.conversation.llm.AssistAPI._async_get_tools"
-)
+@patch(f"custom_components.{DOMAIN}.conversation.llm.AssistAPI._async_get_tools")
 async def test_function_exception(
     mock_get_tools,
     hass: HomeAssistant,
@@ -319,7 +316,6 @@ async def test_function_exception(
     assert mock_create.mock_calls[1][2]["messages"][3] == {
         "role": "tool",
         "tool_call_id": "call_AbCdEfGhIjKlMnOpQrStUvWx",
-        "name": "test_tool",
         "content": '{"error": "HomeAssistantError", "error_text": "Test tool exception"}',
     }
     mock_tool.async_call.assert_awaited_once_with(
@@ -409,4 +405,4 @@ async def test_unknown_hass_api(
         hass, "hello", None, Context(), agent_id=mock_config_entry.entry_id
     )
 
-    assert result == snapshot
+    assert result.as_dict() == snapshot
