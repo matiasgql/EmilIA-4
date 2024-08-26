@@ -299,7 +299,7 @@ class OpenAIConversationEntity(
                     ChatCompletionToolMessageParam(
                         # Note: The functionary 'tool' role expects a name which is
                         # not supported in llama cpp python and the openai protos.
-                        role="assistant",
+                        role="tool",
                         tool_call_id=tool_call.id,
                         content=json.dumps(tool_response),
                     )

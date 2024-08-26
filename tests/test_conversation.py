@@ -128,7 +128,7 @@ async def test_function_call(
     def completion_result(*args, messages, **kwargs):
         for message in messages:
             role = message["role"] if isinstance(message, dict) else message.role
-            if role == "assistant":
+            if role == "tool":
                 return ChatCompletion(
                     id="chatcmpl-1234567890ZYXWVUTSRQPONMLKJIH",
                     choices=[
@@ -199,7 +199,7 @@ async def test_function_call(
 
     assert result.response.response_type == intent.IntentResponseType.ACTION_DONE
     assert mock_create.mock_calls[1][2]["messages"][3] == {
-        "role": "assistant",
+        "role": "tool",
         "tool_call_id": "call_AbCdEfGhIjKlMnOpQrStUvWx",
         "content": '"Test response"',
     }
@@ -243,7 +243,7 @@ async def test_function_exception(
     def completion_result(*args, messages, **kwargs):
         for message in messages:
             role = message["role"] if isinstance(message, dict) else message.role
-            if role == "assistant":
+            if role == "tool":
                 return ChatCompletion(
                     id="chatcmpl-1234567890ZYXWVUTSRQPONMLKJIH",
                     choices=[
@@ -314,7 +314,7 @@ async def test_function_exception(
 
     assert result.response.response_type == intent.IntentResponseType.ACTION_DONE
     assert mock_create.mock_calls[1][2]["messages"][3] == {
-        "role": "assistant",
+        "role": "tool",
         "tool_call_id": "call_AbCdEfGhIjKlMnOpQrStUvWx",
         "content": '{"error": "HomeAssistantError", "error_text": "Test tool exception"}',
     }
