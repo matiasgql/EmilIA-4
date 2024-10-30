@@ -1,4 +1,5 @@
 {
+<<<<<<< ours
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: ["config:base"],
   assignees: ["allenporter"],
@@ -14,4 +15,32 @@
     fileMatch: ["requirements_dev.txt"],
   },
   "pre-commit": { enabled: true },
+=======
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: [
+    'config:recommended',
+  ],
+  assignees: [
+    'allenporter',
+  ],
+  packageRules: [
+    {
+      description: 'Minor updates are automatic',
+      automerge: true,
+      automergeType: 'branch',
+      matchUpdateTypes: [
+        'minor',
+        'patch',
+      ],
+    },
+  ],
+  pip_requirements: {
+    fileMatch: [
+      'requirements_dev.txt',
+    ],
+  },
+  'pre-commit': {
+    enabled: true,
+  },
+>>>>>>> theirs
 }
