@@ -19,3 +19,4 @@ pyspeex-noise>=1.0.2
 
 openai==1.54.3
 voluptuous_openapi==0.0.5
+audioop-lts>=0.2.1
