@@ -1,6 +1,7 @@
 """Tests for the vicuna_conversation component."""
 
-from unittest.mock import AsyncMock, patch
+from typing import Generator
+from unittest.mock import AsyncMock, patch, Mock
 
 from freezegun import freeze_time
 import pytest
@@ -32,6 +33,14 @@ def freeze_the_time():
     """Freeze the time."""
     with freeze_time("2024-05-24 12:00:00", tz_offset=0):
         yield
+
+
+@pytest.fixture(autouse=True)
+def mock_ulid() -> Generator[Mock]:
+    """Mock the ulid library."""
+    with patch("homeassistant.helpers.llm.ulid_now") as mock_ulid_now:
+        mock_ulid_now.return_value = "mock-ulid"
+        yield mock_ulid_now
 
 
 @pytest.fixture(autouse=True)
