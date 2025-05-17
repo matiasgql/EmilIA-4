@@ -9,9 +9,9 @@ The goals of this integration are to:
 - Use latest Home Assistant internal APIs to get the latest features (e.g. MCP, Assist API)
 - Use standard Home Assistant prompts to get the latest [quality improvements](https://github.com/allenporter/home-assistant-datasets/tree/main/reports)
 
-This integration aims to avoid complex non-standard setups such as spawning
-subprocesses to run model servers, encouraging complex and unproving RAG techniques,
-or suggesting lower quality models.
+This integration aims to avoid non-standard setups such as spawning
+subprocesses to run model servers, avoids customized by lower quality
+models, or tools/RAG that cannot be used with other integrations. 
 
 Note: You should prefer using the [Ollama](https://www.home-assistant.io/integrations/ollama/)
 integration for the lowest friction way to use Local LLMs.
