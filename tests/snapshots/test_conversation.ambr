@@ -5,18 +5,6 @@
     AssistantContent(role='assistant', agent_id='conversation.mock_title', content='Hello, how can I help you?', tool_calls=None),
   ])
 # ---
-# name: test_conversation_entity[config_entry_options0]
-  list([
-    UserContent(role='user', content='hello'),
-    AssistantContent(role='assistant', agent_id='01JVFDJ74CG0J6D5JR5H9R8KSZ', content='Hello, how can I help you?', tool_calls=None),
-  ])
-# ---
-# name: test_conversation_entity[config_entry_options1]
-  list([
-    UserContent(role='user', content='hello'),
-    AssistantContent(role='assistant', agent_id='01JVFDJ7922KWXPEXJNJ0EMH1A', content='Hello, how can I help you?', tool_calls=None),
-  ])
-# ---
 # name: test_function_call
   list([
     UserContent(role='user', content='Please call the test function'),
