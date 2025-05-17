@@ -48,6 +48,11 @@ This integration requires an external server, such as any of these:
 5. From the list, select *Custom OpenAI Conversation*
 6. Follow the instructions and enter a *Base URL* to the API server (commonl ends with `/v1`). You
    may optionally enter an *API Key* if required by the provider.
+7. Press **Create** to create the conversation agent
+8. You may then set the model to use:
+  - Press **Configure** to edit the integration options
+  - Uncheck **Recommended model settings** and press **Submit**
+  - Set the **Model name** to the name of the model you would like to use with the server. For example `meta-llama/llama-3.3-8b-instruct:free` if using OpenRouter.
 
 You should then configure a [Voice Assistant](https://www.home-assistant.io/voice_control/voice_remote_local_assistant/).  Select the new `Conversation Agent` you just created and expose
 entities. You should do this even if skipping the part of adding voice components
