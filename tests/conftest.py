@@ -2,8 +2,10 @@
 
 import pathlib
 from collections.abc import Generator
+from collections.abc import AsyncGenerator
 import logging
 from unittest.mock import patch
+from dataclasses import dataclass, field
 
 import pytest
 from syrupy import SnapshotAssertion
@@ -14,6 +16,8 @@ from homeassistant.const import CONF_LLM_HASS_API, Platform
 from homeassistant.helpers import llm
 from homeassistant.core import HomeAssistant
 from homeassistant.setup import async_setup_component
+from homeassistant.components import conversation
+from homeassistant.helpers import chat_session
 
 from pytest_homeassistant_custom_component.common import (
     MockConfigEntry,
@@ -22,6 +26,7 @@ from pytest_homeassistant_custom_component.common import (
 from custom_components.vicuna_conversation.const import (
     DOMAIN,
 )
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -99,11 +104,61 @@ async def mock_config_entry_fixture(
 
 
 @pytest.fixture
-def mock_config_entry_with_assist(
+async def mock_config_entry_with_assist(
     hass: HomeAssistant, mock_config_entry: MockConfigEntry
 ) -> MockConfigEntry:
     """Mock a config entry with assist."""
     hass.config_entries.async_update_entry(
         mock_config_entry, options={CONF_LLM_HASS_API: llm.LLM_API_ASSIST}
     )
+    await hass.async_block_till_done()
     return mock_config_entry
+
+
+@dataclass
+class MockChatLog(conversation.ChatLog):
+    """Mock chat log."""
+
+    _mock_tool_results: dict = field(default_factory=dict)
+
+    def mock_tool_results(self, results: dict) -> None:
+        """Set tool results."""
+        self._mock_tool_results = results
+
+    @property
+    def llm_api(self):
+        """Return LLM API."""
+        return self._llm_api
+
+    @llm_api.setter
+    def llm_api(self, value):
+        """Set LLM API."""
+        self._llm_api = value
+
+        if not value:
+            return
+
+        async def async_call_tool(tool_input):
+            """Call tool."""
+            if tool_input.id not in self._mock_tool_results:
+                raise ValueError(
+                    f"Tool {tool_input.id} not found ({self._mock_tool_results})"
+                )
+            return self._mock_tool_results[tool_input.id]
+
+        self._llm_api.async_call_tool = async_call_tool
+
+
+@pytest.fixture
+async def mock_chat_log(hass: HomeAssistant) -> AsyncGenerator[MockChatLog]:
+    """Return mock chat logs."""
+    # pylint: disable-next=contextmanager-generator-missing-cleanup
+    with (
+        patch(
+            "homeassistant.components.conversation.chat_log.ChatLog",
+            MockChatLog,
+        ),
+        chat_session.async_get_chat_session(hass, "mock-conversation-id") as session,
+        conversation.async_get_chat_log(hass, session) as chat_log,
+    ):
+        yield chat_log
