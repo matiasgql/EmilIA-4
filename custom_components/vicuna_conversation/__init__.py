@@ -17,25 +17,34 @@ from .const import (
     DOMAIN,
 )
 
+__all__ = [
+    DOMAIN,
+]
+
 _LOGGER = logging.getLogger(__name__)
 PLATFORMS = (Platform.CONVERSATION,)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up OpenAI Conversation from a config entry."""
-    client = openai.AsyncOpenAI(
-        api_key=entry.data[CONF_API_KEY], base_url=entry.data[CONF_BASE_URL]
-    )
+
+    def create_client() -> openai.AsyncOpenAI:
+        """Get OpenAI client."""
+        client = openai.AsyncOpenAI(
+            api_key=entry.data[CONF_API_KEY], base_url=entry.data[CONF_BASE_URL]
+        )
+        client.with_options(timeout=10.0).models.list()  # Ignore
+        return client
 
     try:
-        await hass.async_add_executor_job(client.with_options(timeout=10.0).models.list)
+        client = await hass.async_add_executor_job(create_client)
     except openai.AuthenticationError as err:
         _LOGGER.error("Invalid API key: %s", err)
         return False
     except openai.OpenAIError as err:
         raise ConfigEntryNotReady(err) from err
 
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = client
+    entry.runtime_data = client
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
@@ -44,8 +53,4 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload OpenAI."""
-    if not await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        return False
-    hass.data[DOMAIN].pop(entry.entry_id)
-
-    return True
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
