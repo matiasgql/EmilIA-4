@@ -16,7 +16,7 @@ from openai.types.completion_usage import CompletionUsage
 
 from homeassistant.const import CONF_LLM_HASS_API
 from homeassistant.core import Context, HomeAssistant
-from homeassistant.helpers import intent, llm
+from homeassistant.helpers import intent
 from homeassistant.components import conversation
 from homeassistant.setup import async_setup_component
 
@@ -96,6 +96,7 @@ async def test_conversation_entity(
     assert result.response.response_type == intent.IntentResponseType.ACTION_DONE
     # Don't test the prompt, as it's not deterministic
     assert mock_chat_log.content[1:] == snapshot
+
 
 async def test_function_call(
     hass: HomeAssistant,
