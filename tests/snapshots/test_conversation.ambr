@@ -1,96 +1,28 @@
 # serializer version: 1
-# name: test_conversation_entity[config_entry_options0-None]
+# name: test_conversation_entity
   list([
-    dict({
-      'content': '''
-        Current time is 05:00:00. Today's date is 2024-05-24.
-        You are a voice assistant for Home Assistant.
-        Answer questions about the world truthfully.
-        Answer in plain text. Keep it simple and to the point.
-        Only if the user wants to control a device, tell them to expose entities to their voice assistant in Home Assistant.
-      ''',
-      'role': 'system',
-    }),
-    dict({
-      'content': 'hello',
-      'role': 'user',
-    }),
-    dict({
-      'content': 'Hello, how can I help you?',
-      'role': 'assistant',
-    }),
+    UserContent(role='user', content='hello'),
+    AssistantContent(role='assistant', agent_id='conversation.mock_title', content='Hello, how can I help you?', tool_calls=None),
   ])
 # ---
-# name: test_conversation_entity[config_entry_options0-conversation.mock_title]
+# name: test_function_call
   list([
-    dict({
-      'content': '''
-        Current time is 05:00:00. Today's date is 2024-05-24.
-        You are a voice assistant for Home Assistant.
-        Answer questions about the world truthfully.
-        Answer in plain text. Keep it simple and to the point.
-        Only if the user wants to control a device, tell them to expose entities to their voice assistant in Home Assistant.
-      ''',
-      'role': 'system',
-    }),
-    dict({
-      'content': 'hello',
-      'role': 'user',
-    }),
-    dict({
-      'content': 'Hello, how can I help you?',
-      'role': 'assistant',
-    }),
+    UserContent(role='user', content='Please call the test function'),
+    AssistantContent(role='assistant', agent_id='conversation.mock_title', content=None, tool_calls=[ToolInput(tool_name='test_tool', tool_args={'param1': 'call1'}, id='call_call_1')]),
+    ToolResultContent(role='tool_result', agent_id='conversation.mock_title', tool_call_id='call_call_1', tool_name='test_tool', tool_result='value1'),
+    AssistantContent(role='assistant', agent_id='conversation.mock_title', content='I have successfully called the function', tool_calls=None),
   ])
 # ---
-# name: test_conversation_entity[config_entry_options1-None]
-  list([
-    dict({
-      'content': '''
-        Current time is 05:00:00. Today's date is 2024-05-24.
-        You are a voice assistant for Home Assistant.
-        Answer questions about the world truthfully.
-        Answer in plain text. Keep it simple and to the point.
-        Only if the user wants to control a device, tell them to expose entities to their voice assistant in Home Assistant.
-      ''',
-      'role': 'system',
-    }),
-    dict({
-      'content': 'hello',
-      'role': 'user',
-    }),
-    dict({
-      'content': 'Hello, how can I help you?',
-      'role': 'assistant',
-    }),
-  ])
+# name: test_function_exception[]
+  'Unexpected tool argument response: Expecting value: line 1 column 1 (char 0)'
 # ---
-# name: test_conversation_entity[config_entry_options1-conversation.mock_title]
-  list([
-    dict({
-      'content': '''
-        Current time is 05:00:00. Today's date is 2024-05-24.
-        You are a voice assistant for Home Assistant.
-        Answer questions about the world truthfully.
-        Answer in plain text. Keep it simple and to the point.
-        Only if the user wants to control a device, tell them to expose entities to their voice assistant in Home Assistant.
-      ''',
-      'role': 'system',
-    }),
-    dict({
-      'content': 'hello',
-      'role': 'user',
-    }),
-    dict({
-      'content': 'Hello, how can I help you?',
-      'role': 'assistant',
-    }),
-  ])
+# name: test_function_exception[{"para]
+  'Unexpected tool argument response: Unterminated string starting at: line 1 column 2 (char 1)'
 # ---
 # name: test_unknown_hass_api
   dict({
     'continue_conversation': False,
-    'conversation_id': None,
+    'conversation_id': 'conversation-id',
     'response': dict({
       'card': dict({
       }),
@@ -102,7 +34,7 @@
       'speech': dict({
         'plain': dict({
           'extra_data': None,
-          'speech': 'Error preparing LLM API: API non-existing not found',
+          'speech': 'Error preparing LLM API',
         }),
       }),
     }),

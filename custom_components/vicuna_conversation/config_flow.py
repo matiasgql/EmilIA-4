@@ -65,10 +65,17 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> None:
 
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
     """
-    client = openai.AsyncOpenAI(
-        api_key=data[CONF_API_KEY], base_url=data[CONF_BASE_URL]
-    )
-    await hass.async_add_executor_job(client.with_options(timeout=10.0).models.list)
+
+    def list_models() -> None:
+        """Get OpenAI client."""
+        client = openai.AsyncOpenAI(
+            api_key=data[CONF_API_KEY], base_url=data[CONF_BASE_URL]
+        )
+        client = client.with_options(timeout=10.0)
+        client.models.list()  # Ignore
+        return
+
+    await hass.async_add_executor_job(list_models)
 
 
 class OpenAIConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -81,7 +88,7 @@ class OpenAIConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Handle the initial step."""
         if user_input is None:
-            return self.async_show_form(   # type: ignore[no-any-return]
+            return self.async_show_form(
                 step_id="user", data_schema=STEP_USER_DATA_SCHEMA
             )
 
@@ -97,13 +104,13 @@ class OpenAIConfigFlow(ConfigFlow, domain=DOMAIN):
             LOGGER.exception("Unexpected exception")
             errors["base"] = "unknown"
         else:
-            return self.async_create_entry(  # type: ignore[no-any-return]
+            return self.async_create_entry(
                 title="Custom OpenAI",
                 data=user_input,
                 options=RECOMMENDED_OPTIONS,
             )
 
-        return self.async_show_form(  # type: ignore[no-any-return]
+        return self.async_show_form(
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
         )
 
@@ -120,7 +127,6 @@ class OpenAIOptionsFlow(OptionsFlow):
 
     def __init__(self, config_entry: ConfigEntry) -> None:
         """Initialize options flow."""
-        self.config_entry = config_entry
         self.last_rendered_recommended = config_entry.options.get(
             CONF_RECOMMENDED, False
         )
@@ -135,7 +141,7 @@ class OpenAIOptionsFlow(OptionsFlow):
             if user_input[CONF_RECOMMENDED] == self.last_rendered_recommended:
                 if user_input[CONF_LLM_HASS_API] == "none":
                     user_input.pop(CONF_LLM_HASS_API)
-                return self.async_create_entry(title="", data=user_input)  # type: ignore[no-any-return]
+                return self.async_create_entry(title="", data=user_input)
 
             # Re-render the options again, now with the recommended options shown/hidden
             self.last_rendered_recommended = user_input[CONF_RECOMMENDED]
@@ -147,7 +153,7 @@ class OpenAIOptionsFlow(OptionsFlow):
             }
 
         schema = openai_config_option_schema(self.hass, options)
-        return self.async_show_form(  # type: ignore[no-any-return]
+        return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(schema),
         )
@@ -175,7 +181,11 @@ def openai_config_option_schema(
     schema = {
         vol.Optional(
             CONF_PROMPT,
-            description={"suggested_value": options.get(CONF_PROMPT, llm.DEFAULT_INSTRUCTIONS_PROMPT)},
+            description={
+                "suggested_value": options.get(
+                    CONF_PROMPT, llm.DEFAULT_INSTRUCTIONS_PROMPT
+                )
+            },
         ): TemplateSelector(),
         vol.Optional(
             CONF_LLM_HASS_API,
