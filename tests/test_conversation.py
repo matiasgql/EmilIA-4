@@ -51,26 +51,13 @@ async def mock_setup_integration(
     await hass.async_block_till_done()
 
 
-@pytest.mark.parametrize(
-    "config_entry_options", [{}, {CONF_LLM_HASS_API: llm.LLM_API_ASSIST}]
-)
 async def test_conversation_entity(
     hass: HomeAssistant,
+    mock_chat_log: MockChatLog,
     mock_config_entry: MockConfigEntry,
     snapshot: SnapshotAssertion,
-    config_entry_options: dict[str, str],
 ) -> None:
     """Verify the conversation entity is loaded."""
-
-    hass.config_entries.async_update_entry(
-        mock_config_entry,
-        options={
-            **mock_config_entry.options,
-            CONF_LLM_HASS_API: llm.LLM_API_ASSIST,
-        },
-    )
-    await hass.async_block_till_done()  # Integration may reload
-    agent_id = mock_config_entry.entry_id
 
     with patch(
         "openai.resources.chat.completions.AsyncCompletions.create",
@@ -97,18 +84,18 @@ async def test_conversation_entity(
                 completion_tokens=9, prompt_tokens=8, total_tokens=17
             ),
         ),
-    ) as mock_create:
+    ):
         result = await conversation.async_converse(
             hass,
             "hello",
-            None,
+            mock_chat_log.conversation_id,
             Context(),
-            agent_id=agent_id,
+            agent_id="conversation.mock_title",
         )
 
     assert result.response.response_type == intent.IntentResponseType.ACTION_DONE
-    assert mock_create.mock_calls[0][2]["messages"] == snapshot
-
+    # Don't test the prompt, as it's not deterministic
+    assert mock_chat_log.content[1:] == snapshot
 
 async def test_function_call(
     hass: HomeAssistant,
