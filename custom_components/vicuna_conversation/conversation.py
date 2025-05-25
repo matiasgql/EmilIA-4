@@ -53,7 +53,7 @@ MAX_TOOL_ITERATIONS = 10
 
 
 # TODO FIX THIS BEFORE MERGE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-ENABLE_STREAMING = True
+ENABLE_STREAMING = False
 
 
 async def async_setup_entry(
@@ -362,29 +362,24 @@ class OpenAIConversationEntity(
                 raise HomeAssistantError("Error talking to API") from err
 
             if ENABLE_STREAMING:
-                messages.extend(
-                    [
-                        _convert_content_to_param(content)
-                        async for content in chat_log.async_add_delta_content_stream(
-                            user_input.agent_id, _transform_stream(result)
-                        )
-                    ]
-                )
-
-                if not chat_log.unresponded_tool_results:
-                    break
-
+                convert_message = _convert_content_to_param
+                convert_stream = _transform_stream
             else:
-                response = result.choices[0].message
+                convert_message = _convert_content_to_chat_message
+                convert_stream = _transform_response
 
-                async for content in chat_log.async_add_delta_content_stream(
-                    user_input.agent_id, _transform_response(response)
-                ):
-                    if m := _convert_content_to_chat_message(content):
-                        messages.append(m)
+            messages.extend(
+                [
+                    msg
+                    async for content in chat_log.async_add_delta_content_stream(
+                        user_input.agent_id, convert_stream(result)
+                    )
+                    if (msg := convert_message(content))
+                ]
+            )
 
-                if not chat_log.unresponded_tool_results:
-                    break
+            if not chat_log.unresponded_tool_results:
+                break
 
         intent_response = intent.IntentResponse(language=user_input.language)
         assert type(chat_log.content[-1]) is conversation.AssistantContent
