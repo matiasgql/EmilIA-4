@@ -367,6 +367,7 @@ class OpenAIConversationEntity(
             else:
                 convert_message = _convert_content_to_chat_message
                 convert_stream = _transform_response
+                result = result.choices[0].message
 
             messages.extend(
                 [
