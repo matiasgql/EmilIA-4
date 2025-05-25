@@ -37,6 +37,7 @@ from .const import (
     CONF_PROMPT,
     CONF_TEMPERATURE,
     CONF_TOP_P,
+    CONF_STREAMING,
     DOMAIN,
     RECOMMENDED_CHAT_MODEL,
     RECOMMENDED_MAX_TOKENS,
@@ -50,10 +51,6 @@ _LOGGER = logging.getLogger(__name__)
 
 # Max number of back and forth with the LLM to generate a response
 MAX_TOOL_ITERATIONS = 10
-
-
-# TODO FIX THIS BEFORE MERGE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-ENABLE_STREAMING = False
 
 
 async def async_setup_entry(
@@ -355,13 +352,13 @@ class OpenAIConversationEntity(
                     top_p=options.get(CONF_TOP_P, RECOMMENDED_TOP_P),
                     temperature=options.get(CONF_TEMPERATURE, RECOMMENDED_TEMPERATURE),
                     user=chat_log.conversation_id,
-                    stream=ENABLE_STREAMING,
+                    stream=options.get(CONF_STREAMING),
                 )
             except openai.OpenAIError as err:
                 LOGGER.error("Error talking to API: %s", err)
                 raise HomeAssistantError("Error talking to API") from err
 
-            if ENABLE_STREAMING:
+            if options.get(CONF_STREAMING):
                 convert_message = _convert_content_to_param
                 convert_stream = _transform_stream
             else:
