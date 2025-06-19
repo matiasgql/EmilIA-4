@@ -5,7 +5,7 @@
     AssistantContent(role='assistant', agent_id='conversation.mock_title', content='Hello, how can I help you?', tool_calls=None),
   ])
 # ---
-# name: test_function_call
+# name: test_function_call[config_entry_options0]
   list([
     UserContent(role='user', content='Please call the test function'),
     AssistantContent(role='assistant', agent_id='conversation.mock_title', content=None, tool_calls=[ToolInput(tool_name='test_tool', tool_args={'param1': 'call1'}, id='call_call_1')]),
@@ -13,10 +13,10 @@
     AssistantContent(role='assistant', agent_id='conversation.mock_title', content='I have successfully called the function', tool_calls=None),
   ])
 # ---
-# name: test_function_exception[]
+# name: test_function_exception[-config_entry_options0]
   'Unexpected tool argument response: Expecting value: line 1 column 1 (char 0)'
 # ---
-# name: test_function_exception[{"para]
+# name: test_function_exception[{"para-config_entry_options0]
   'Unexpected tool argument response: Unterminated string starting at: line 1 column 2 (char 1)'
 # ---
 # name: test_unknown_hass_api
