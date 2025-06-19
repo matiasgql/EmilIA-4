@@ -46,6 +46,8 @@ from .const import (
     RECOMMENDED_TOP_P,
     LOGGER,
 )
+from .openai_client import async_create_client
+
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
@@ -83,16 +85,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> None:
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
     """
 
-    def list_models() -> None:
-        """Get OpenAI client."""
-        client = openai.AsyncOpenAI(
-            api_key=data[CONF_API_KEY], base_url=data[CONF_BASE_URL]
-        )
-        client = client.with_options(timeout=10.0)
-        client.models.list()  # Ignore
-        return
-
-    await hass.async_add_executor_job(list_models)
+    await async_create_client(hass, data)
 
 
 def get_streaming_support(base_url: str, api_key: str, model_name: str) -> bool:
