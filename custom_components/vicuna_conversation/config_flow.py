@@ -63,6 +63,21 @@ RECOMMENDED_OPTIONS = {
     CONF_PROMPT: llm.DEFAULT_INSTRUCTIONS_PROMPT,
 }
 
+TEST_MESSAGES = [
+    {"role": "system", "content": "You are a helpful assistant."},
+    {"role": "user", "content": "What is the capital of France?"},
+]
+TEST_TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "test_function",
+            "description": "Test function.",
+        },
+    }
+]
+TEST_MAX_TOKENS = 3 # we don't care about the response
+
 
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> None:
     """Validate the user input allows us to connect.
@@ -84,21 +99,9 @@ def get_streaming_support(base_url: str, api_key: str, model_name: str) -> bool:
     try:
         stream = client.chat.completions.create(
             model=model_name,
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": "Hello, how are you?"},
-            ],
-            tools=[
-                {
-                    "type": "function",
-                    "function": {
-                        "name": "test_function",
-                        "description": "Test function.",
-                    },
-                }
-            ],
-            temperature=0,
-            max_tokens=3,  # we don't care about the response
+            messages=TEST_MESSAGES,
+            tools=TEST_TOOLS,
+            max_tokens=TEST_MAX_TOKENS,
             stream=True,
         )
         for event in stream:
