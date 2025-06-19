@@ -43,6 +43,7 @@ from .const import (
     DEFAULT_BASE_URL,
     DOMAIN,
     RECOMMENDED_CHAT_MODEL,
+    RECOMMENDED_CHAT_MODELS,
     RECOMMENDED_MAX_TOKENS,
     RECOMMENDED_TEMPERATURE,
     RECOMMENDED_TOP_P,
@@ -79,8 +80,11 @@ def _recommended_model(models: list[str] | None) -> str:
     """Return the selected model from user input."""
     # Don't use the recommended model if there is a valid list of other
     # models to choose from.
-    if not models or RECOMMENDED_CHAT_MODEL in models:
+    if not models:
         return RECOMMENDED_CHAT_MODEL
+    for model in RECOMMENDED_CHAT_MODELS:
+        if model in models:
+            return model
     return models[0]
 
 
@@ -105,7 +109,7 @@ class OpenAIConfigFlow(ConfigFlow, domain=DOMAIN):
             except openai.APIConnectionError:
                 errors["base"] = "cannot_connect"
             except openai.AuthenticationError:
-                errors["base"] = "invalid_auth"
+                errors["base"] = "invalid_api_key"
             except Exception:  # pylint: disable=broad-except
                 LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
