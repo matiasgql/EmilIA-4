@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from types import MappingProxyType
-from typing import Any, Mapping
+from typing import Any
 
 import openai
 import voluptuous as vol
@@ -75,17 +75,12 @@ RECOMMENDED_OPTIONS = {
 }
 
 
-def _selected_model(
-    user_input: Mapping[str, Any] | None, models: list[str] | None
-) -> str:
+def _recommended_model(models: list[str] | None) -> str:
     """Return the selected model from user input."""
     # Don't use the recommended model if there is a valid list of other
     # models to choose from.
-    if not models:
-        if user_input is not None:
-            return user_input.get(CONF_CHAT_MODEL, RECOMMENDED_CHAT_MODEL)
-        else:
-            return RECOMMENDED_CHAT_MODEL
+    if not models or RECOMMENDED_CHAT_MODEL in models:
+        return RECOMMENDED_CHAT_MODEL
     return models[0]
 
 
@@ -172,7 +167,9 @@ class OpenAIConfigFlow(ConfigFlow, domain=DOMAIN):
                     }
                 ),
                 {
-                    CONF_CHAT_MODEL: _selected_model(user_input, self.models),
+                    CONF_CHAT_MODEL: (user_input or {}).get(
+                        CONF_CHAT_MODEL, _recommended_model(self.models)
+                    ),
                 },
             ),
             errors=errors,
@@ -266,7 +263,7 @@ def openai_config_option_schema(
         vol.Optional(
             CONF_CHAT_MODEL,
             description={"suggested_value": options.get(CONF_CHAT_MODEL)},
-            default=_selected_model(options, models),
+            default=options.get(CONF_CHAT_MODEL, _recommended_model(models)),
         ): SelectSelector(
             SelectSelectorConfig(
                 options=models or [],
