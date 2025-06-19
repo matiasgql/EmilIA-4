@@ -221,6 +221,7 @@ class OpenAIOptionsFlow(OptionsFlow):
                 CONF_RECOMMENDED: user_input[CONF_RECOMMENDED],
                 CONF_PROMPT: user_input[CONF_PROMPT],
                 CONF_LLM_HASS_API: user_input[CONF_LLM_HASS_API],
+                CONF_CHAT_MODEL: user_input[CONF_CHAT_MODEL],
             }
 
         schema = openai_config_option_schema(self.hass, options, self.models)
