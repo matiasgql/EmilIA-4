@@ -1,11 +1,12 @@
 """Fixtures for the custom component."""
 
-import pathlib
 from collections.abc import Generator
 from collections.abc import AsyncGenerator
-import logging
-from unittest.mock import patch
 from dataclasses import dataclass, field
+import pathlib
+import logging
+from typing import Any
+from unittest.mock import patch
 
 import pytest
 from syrupy import SnapshotAssertion
@@ -32,6 +33,11 @@ _LOGGER = logging.getLogger(__name__)
 
 
 DIFFERENT_DIRECTORY = "snapshots"
+CONFIG_ENTRY_DATA = {
+    "api_key": "sk-0000000000000000000",
+    "base_url": "http://llama-cublas.llama:8000/v1",
+}
+ASSIST_OPTIONS = {CONF_LLM_HASS_API: llm.LLM_API_ASSIST}
 
 
 class DifferentDirectoryExtension(AmberSnapshotExtension):
@@ -86,33 +92,36 @@ async def mock_setup_integration(
         yield
 
 
+@pytest.fixture(name="config_entry_data")
+async def config_entry_data_fixture() -> dict[str, Any]:
+    """Fixture to add data to the config entry."""
+    return {}
+
+
+@pytest.fixture(name="config_entry_options")
+async def config_entry_options_fixture() -> dict[str, Any]:
+    """Fixture to add options to the config entry."""
+    return {}
+
+
+
 @pytest.fixture(name="mock_config_entry")
 async def mock_config_entry_fixture(
     hass: HomeAssistant,
+    config_entry_data: dict[str, Any],
+    config_entry_options: dict[str, Any],
 ) -> MockConfigEntry:
     """Fixture to create a configuration entry."""
     config_entry = MockConfigEntry(
         data={
-            "api_key": "sk-0000000000000000000",
-            "base_url": "http://llama-cublas.llama:8000/v1",
+            **CONFIG_ENTRY_DATA,
+            **config_entry_data,
         },
         domain=DOMAIN,
-        options={},
+        options=config_entry_options,
     )
     config_entry.add_to_hass(hass)
     return config_entry
-
-
-@pytest.fixture
-async def mock_config_entry_with_assist(
-    hass: HomeAssistant, mock_config_entry: MockConfigEntry
-) -> MockConfigEntry:
-    """Mock a config entry with assist."""
-    hass.config_entries.async_update_entry(
-        mock_config_entry, options={CONF_LLM_HASS_API: llm.LLM_API_ASSIST}
-    )
-    await hass.async_block_till_done()
-    return mock_config_entry
 
 
 @dataclass

@@ -26,7 +26,7 @@ from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import (
     MockConfigEntry,
 )
-from .conftest import MockChatLog
+from .conftest import MockChatLog, ASSIST_OPTIONS
 
 
 @pytest.fixture(autouse=True)
@@ -100,11 +100,11 @@ async def test_conversation_entity(
     # Don't test the prompt, as it's not deterministic
     assert mock_chat_log.content[1:] == snapshot
 
-
+@pytest.mark.parametrize(("config_entry_options"), [(ASSIST_OPTIONS)])
 async def test_function_call(
     hass: HomeAssistant,
     mock_chat_log: MockChatLog,  # noqa: F811
-    mock_config_entry_with_assist: MockConfigEntry,
+    mock_config_entry: MockConfigEntry,
     snapshot: SnapshotAssertion,
 ) -> None:
     """Test function call from the assistant."""
@@ -193,8 +193,9 @@ async def test_function_call(
     assert mock_chat_log.content[1:] == snapshot
 
 
+@pytest.mark.parametrize(("config_entry_options"), [(ASSIST_OPTIONS)])
 @pytest.mark.parametrize(
-    "tool_arguments",
+    ("tool_arguments"),
     [
         (""),
         ('{"para'),
@@ -203,7 +204,7 @@ async def test_function_call(
 async def test_function_exception(
     hass: HomeAssistant,
     mock_chat_log: MockChatLog,  # noqa: F811
-    mock_config_entry_with_assist: MockConfigEntry,
+    mock_config_entry: MockConfigEntry,
     tool_arguments: str,
     snapshot: SnapshotAssertion,
 ) -> None:
@@ -285,9 +286,10 @@ async def test_function_exception(
     assert result.response.speech["plain"]["speech"] == snapshot
 
 
+@pytest.mark.parametrize(("config_entry_options"), [(ASSIST_OPTIONS)])
 async def test_assist_api_tools_conversion(
     hass: HomeAssistant,
-    mock_config_entry_with_assist: MockConfigEntry,
+    mock_config_entry: MockConfigEntry,
 ) -> None:
     """Test that we are able to convert actual tools from Assist API."""
     for component in [
@@ -304,7 +306,7 @@ async def test_assist_api_tools_conversion(
     ]:
         assert await async_setup_component(hass, component, {})
 
-    agent_id = mock_config_entry_with_assist.entry_id
+    agent_id = mock_config_entry.entry_id
     with patch(
         "openai.resources.chat.completions.AsyncCompletions.create",
         new_callable=AsyncMock,
