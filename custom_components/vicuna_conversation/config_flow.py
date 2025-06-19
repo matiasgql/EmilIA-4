@@ -114,6 +114,32 @@ def get_streaming_support(base_url: str, api_key: str, model_name: str) -> bool:
     return True
 
 
+def get_streaming_support(base_url: str, api_key: str, model_name: str) -> bool:
+    """Validate streaming and tool calling support on the remote API.
+
+    Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
+    """
+
+    client = openai.OpenAI(api_key=api_key, base_url=base_url)
+    client = client.with_options(timeout=10.0)
+    try:
+        stream = client.chat.completions.create(
+            model=model_name,
+            messages=TEST_MESSAGES,
+            tools=TEST_TOOLS,
+            max_tokens=TEST_MAX_TOKENS,
+            stream=True,
+        )
+        for event in stream:
+            if event.choices[0].finish_reason is not None:
+                continue
+    except openai.OpenAIError:
+        # If the model doesn't support streaming, we can just fall back to non-streaming
+        return False
+    # If we get here, we got a full response and streaming is supported
+    return True
+
+
 class OpenAIConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for OpenAI Conversation."""
 
