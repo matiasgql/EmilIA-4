@@ -191,7 +191,7 @@ async def _transform_stream(
     result: AsyncStream[ChatCompletionChunk],
 ) -> AsyncGenerator[conversation.AssistantContentDeltaDict]:
     """Transform an OpenAI delta stream into HA format."""
-    current_tool_call: dict | None = None
+    current_tool_call: dict[str, Any] | None = None
 
     async for chunk in result:
         LOGGER.debug("Received chunk: %s", chunk)
@@ -199,7 +199,7 @@ async def _transform_stream(
 
         if choice.finish_reason:
             if current_tool_call:
-                tool_args = []
+                tool_args: dict[str, Any] = {}
                 if current_tool_call["tool_args"]:
                     tool_args = json.loads(current_tool_call["tool_args"])
                 yield {
@@ -358,6 +358,10 @@ class OpenAIConversationEntity(
                 LOGGER.error("Error talking to API: %s", err)
                 raise HomeAssistantError("Error talking to API") from err
 
+            convert_message: Callable[[Any], Any]
+            convert_stream: Callable[
+                [Any], AsyncGenerator[conversation.AssistantContentDeltaDict]
+            ]
             if options.get(CONF_STREAMING):
                 convert_message = _convert_content_to_param
                 convert_stream = _transform_stream

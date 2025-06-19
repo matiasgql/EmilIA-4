@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import logging
 from types import MappingProxyType
-from typing import Any
+from typing import Any, Mapping
 
 import openai
 import voluptuous as vol
@@ -20,12 +21,13 @@ from homeassistant.helpers.selector import (
     NumberSelector,
     NumberSelectorConfig,
     TemplateSelector,
+    SelectSelectorMode,
+    SelectSelector,
+    SelectSelectorConfig,
 )
 from homeassistant.helpers import llm
 from homeassistant.helpers.selector import (
     SelectOptionDict,
-    SelectSelector,
-    SelectSelectorConfig,
 )
 
 from .const import (
@@ -46,13 +48,22 @@ from .const import (
     RECOMMENDED_TOP_P,
     LOGGER,
 )
-from .openai_client import async_create_client
+from .openai_client import (
+    async_create_client,
+    async_list_models,
+    async_validate_completions,
+)
 
+_LOGGER = logging.getLogger(__name__)
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_API_KEY, default=DEFAULT_API_KEY): str,
         vol.Required(CONF_BASE_URL, default=DEFAULT_BASE_URL): str,
+    }
+)
+STEP_MODELS_DATA_SCHEMA = vol.Schema(
+    {
         vol.Required(CONF_CHAT_MODEL, default=RECOMMENDED_CHAT_MODEL): str,
     }
 )
@@ -63,81 +74,19 @@ RECOMMENDED_OPTIONS = {
     CONF_PROMPT: llm.DEFAULT_INSTRUCTIONS_PROMPT,
 }
 
-TEST_MESSAGES = [
-    {"role": "system", "content": "You are a helpful assistant."},
-    {"role": "user", "content": "What is the capital of France?"},
-]
-TEST_TOOLS = [
-    {
-        "type": "function",
-        "function": {
-            "name": "test_function",
-            "description": "Test function.",
-        },
-    }
-]
-TEST_MAX_TOKENS = 3 # we don't care about the response
 
-
-async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> None:
-    """Validate the user input allows us to connect.
-
-    Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
-    """
-
-    await async_create_client(hass, data)
-
-
-def get_streaming_support(base_url: str, api_key: str, model_name: str) -> bool:
-    """Validate streaming and tool calling support on the remote API.
-
-    Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
-    """
-
-    client = openai.OpenAI(api_key=api_key, base_url=base_url)
-    client = client.with_options(timeout=10.0)
-    try:
-        stream = client.chat.completions.create(
-            model=model_name,
-            messages=TEST_MESSAGES,
-            tools=TEST_TOOLS,
-            max_tokens=TEST_MAX_TOKENS,
-            stream=True,
-        )
-        for event in stream:
-            if event.choices[0].finish_reason is not None:
-                continue
-    except openai.OpenAIError:
-        # If the model doesn't support streaming, we can just fall back to non-streaming
-        return False
-    # If we get here, we got a full response and streaming is supported
-    return True
-
-
-def get_streaming_support(base_url: str, api_key: str, model_name: str) -> bool:
-    """Validate streaming and tool calling support on the remote API.
-
-    Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
-    """
-
-    client = openai.OpenAI(api_key=api_key, base_url=base_url)
-    client = client.with_options(timeout=10.0)
-    try:
-        stream = client.chat.completions.create(
-            model=model_name,
-            messages=TEST_MESSAGES,
-            tools=TEST_TOOLS,
-            max_tokens=TEST_MAX_TOKENS,
-            stream=True,
-        )
-        for event in stream:
-            if event.choices[0].finish_reason is not None:
-                continue
-    except openai.OpenAIError:
-        # If the model doesn't support streaming, we can just fall back to non-streaming
-        return False
-    # If we get here, we got a full response and streaming is supported
-    return True
+def _selected_model(
+    user_input: Mapping[str, Any] | None, models: list[str] | None
+) -> str:
+    """Return the selected model from user input."""
+    # Don't use the recommended model if there is a valid list of other
+    # models to choose from.
+    if not models:
+        if user_input is not None:
+            return user_input.get(CONF_CHAT_MODEL, RECOMMENDED_CHAT_MODEL)
+        else:
+            return RECOMMENDED_CHAT_MODEL
+    return models[0]
 
 
 class OpenAIConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -145,42 +94,88 @@ class OpenAIConfigFlow(ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
+    data: dict[str, Any] | None = None
+    client: openai.AsyncOpenAI | None = None
+    models: list[str] | None = None
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Handle the initial step."""
-        if user_input is None:
-            return self.async_show_form(
-                step_id="user", data_schema=STEP_USER_DATA_SCHEMA
-            )
-
         errors = {}
-
-        try:
-            await validate_input(self.hass, user_input)
-        except openai.APIConnectionError:
-            errors["base"] = "cannot_connect"
-        except openai.AuthenticationError:
-            errors["base"] = "invalid_auth"
-        except Exception:  # pylint: disable=broad-except
-            LOGGER.exception("Unexpected exception")
-            errors["base"] = "unknown"
-        else:
-            config_options = RECOMMENDED_OPTIONS.copy()
-            config_options[CONF_CHAT_MODEL] = user_input[CONF_CHAT_MODEL]
-            config_options[CONF_STREAMING] = get_streaming_support(
-                user_input[CONF_BASE_URL],
-                user_input[CONF_API_KEY],
-                user_input[CONF_CHAT_MODEL],
-            )
-            return self.async_create_entry(
-                title="Custom OpenAI",
-                data=user_input,
-                options=config_options,
-            )
+        if user_input is not None:
+            try:
+                self.client = await async_create_client(self.hass, user_input)
+                self.models = await async_list_models(self.client)
+            except openai.APIConnectionError:
+                errors["base"] = "cannot_connect"
+            except openai.AuthenticationError:
+                errors["base"] = "invalid_auth"
+            except Exception:  # pylint: disable=broad-except
+                LOGGER.exception("Unexpected exception")
+                errors["base"] = "unknown"
+            else:
+                self.data = user_input
+                return await self.async_step_model()
 
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
+        )
+
+    async def async_step_model(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle selecting a model."""
+        assert self.client is not None
+        assert self.models is not None
+        errors = {}
+        if user_input is not None:
+            model = user_input[CONF_CHAT_MODEL]
+            success = await async_validate_completions(
+                self.client,
+                model=model,
+                stream=False,
+            )
+            if not success:
+                errors["base"] = "cannot_connect"
+            else:
+                stream_support = await async_validate_completions(
+                    self.client,
+                    model=model,
+                    stream=True,
+                )
+                return self.async_create_entry(
+                    title="Custom OpenAI",
+                    data=self.data,  # type: ignore[arg-type]
+                    options={
+                        **RECOMMENDED_OPTIONS,
+                        **user_input,
+                        CONF_STREAMING: stream_support,
+                    },
+                )
+
+        return self.async_show_form(
+            step_id="model",
+            data_schema=self.add_suggested_values_to_schema(
+                vol.Schema(
+                    {
+                        vol.Optional(
+                            CONF_CHAT_MODEL,
+                        ): SelectSelector(
+                            SelectSelectorConfig(
+                                options=self.models,
+                                translation_key=CONF_CHAT_MODEL,
+                                mode=SelectSelectorMode.DROPDOWN,
+                                custom_value=True,  # Allow manual model entry
+                            ),
+                        ),
+                    }
+                ),
+                {
+                    CONF_CHAT_MODEL: _selected_model(user_input, self.models),
+                },
+            ),
+            errors=errors,
         )
 
     @staticmethod
@@ -194,6 +189,8 @@ class OpenAIConfigFlow(ConfigFlow, domain=DOMAIN):
 class OpenAIOptionsFlow(OptionsFlow):
     """OpenAI config flow options handler."""
 
+    models: list[str] | None = None
+
     def __init__(self, config_entry: ConfigEntry) -> None:
         """Initialize options flow."""
         self.last_rendered_recommended = config_entry.options.get(
@@ -206,15 +203,14 @@ class OpenAIOptionsFlow(OptionsFlow):
         """Manage the options."""
         options: dict[str, Any] | MappingProxyType[str, Any] = self.config_entry.options
 
+        if self.models is None:
+            client = await async_create_client(self.hass, self.config_entry.data)
+            self.models = await async_list_models(client)
+
         if user_input is not None:
             if user_input[CONF_RECOMMENDED] == self.last_rendered_recommended:
                 if user_input[CONF_LLM_HASS_API] == "none":
                     user_input.pop(CONF_LLM_HASS_API)
-                base_url = self.config_entry.data[CONF_BASE_URL]
-                api_key = self.config_entry.data[CONF_API_KEY]
-                user_input[CONF_STREAMING] = get_streaming_support(
-                    base_url, api_key, user_input[CONF_CHAT_MODEL]
-                )
                 return self.async_create_entry(title="", data=user_input)
 
             # Re-render the options again, now with the recommended options shown/hidden
@@ -226,7 +222,7 @@ class OpenAIOptionsFlow(OptionsFlow):
                 CONF_LLM_HASS_API: user_input[CONF_LLM_HASS_API],
             }
 
-        schema = openai_config_option_schema(self.hass, options)
+        schema = openai_config_option_schema(self.hass, options, self.models)
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(schema),
@@ -236,6 +232,7 @@ class OpenAIOptionsFlow(OptionsFlow):
 def openai_config_option_schema(
     hass: HomeAssistant,
     options: dict[str, Any] | MappingProxyType[str, Any],
+    models: list[str] | None = None,
 ) -> dict:
     """Return a schema for OpenAI completion options."""
     hass_apis: list[SelectOptionDict] = [
@@ -269,8 +266,15 @@ def openai_config_option_schema(
         vol.Optional(
             CONF_CHAT_MODEL,
             description={"suggested_value": options.get(CONF_CHAT_MODEL)},
-            default=RECOMMENDED_CHAT_MODEL,
-        ): str,
+            default=_selected_model(options, models),
+        ): SelectSelector(
+            SelectSelectorConfig(
+                options=models or [],
+                translation_key=CONF_CHAT_MODEL,
+                mode=SelectSelectorMode.DROPDOWN,
+                custom_value=True,  # Allow manual model entry
+            ),
+        ),
         vol.Required(
             CONF_RECOMMENDED, default=options.get(CONF_RECOMMENDED, False)
         ): bool,

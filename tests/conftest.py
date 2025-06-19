@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 import pathlib
 import logging
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from syrupy import SnapshotAssertion
@@ -104,7 +104,6 @@ async def config_entry_options_fixture() -> dict[str, Any]:
     return {}
 
 
-
 @pytest.fixture(name="mock_config_entry")
 async def mock_config_entry_fixture(
     hass: HomeAssistant,
@@ -171,3 +170,22 @@ async def mock_chat_log(hass: HomeAssistant) -> AsyncGenerator[MockChatLog]:
         conversation.async_get_chat_log(hass, session) as chat_log,
     ):
         yield chat_log
+
+
+@pytest.fixture(autouse=True)
+async def mock_models_list() -> None:
+    """Initialize integration."""
+    with patch(
+        "openai.resources.models.AsyncModels.list",
+    ):
+        yield
+
+
+@pytest.fixture(name="mock_completion", autouse=True)
+async def mock_openai_client_fixture() -> AsyncMock:
+    """Fixture to mock the OpenAI client."""
+    with patch(
+        "openai.resources.chat.completions.AsyncCompletions.create",
+        new_callable=AsyncMock,
+    ) as mock_create:
+        yield mock_create
