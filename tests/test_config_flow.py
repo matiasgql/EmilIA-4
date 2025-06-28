@@ -234,8 +234,10 @@ async def test_creating_conversation_subentry(
     assert result2["title"] == "My Custom Agent"
 
     processed_options = RECOMMENDED_OPTIONS.copy()
-    processed_options[CONF_PROMPT] = processed_options[CONF_PROMPT].strip()
-    processed_options[CONF_STREAMING] = True
+    processed_options.update({
+        CONF_PROMPT: = processed_options[CONF_PROMPT].strip()
+        CONF_STREAMING: True
+    })
 
     assert result2["data"] == processed_options
 
