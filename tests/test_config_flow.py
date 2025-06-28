@@ -9,7 +9,7 @@ import openai
 from homeassistant import config_entries
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.core import HomeAssistant
-from homeassistant.const import CONF_LLM_HASS_API
+from homeassistant.const import CONF_LLM_HASS_API, CONF_API_KEY
 
 
 from pytest_homeassistant_custom_component.common import (
@@ -28,6 +28,7 @@ from custom_components.vicuna_conversation.const import (
     RECOMMENDED_CHAT_MODEL,
     RECOMMENDED_MAX_TOKENS,
     RECOMMENDED_TOP_P,
+    DEFAULT_CONVERSATION_NAME,
 )
 from custom_components.vicuna_conversation.config_flow import RECOMMENDED_OPTIONS
 
@@ -41,6 +42,16 @@ def mock_setup(hass: HomeAssistant) -> Generator[Mock]:
         ) as mock_setup,
     ):
         yield mock_setup
+
+
+# @pytest.fixture
+# async def mock_setup_integration(
+#     hass: HomeAssistant, mock_config_entry: MockConfigEntry
+# ) -> None:
+#     """Setup the integration"""
+#     assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
+#     await hass.async_block_till_done()
+#     await hass.async_block_till_done()
 
 
 async def test_config_flow(
@@ -57,7 +68,7 @@ async def test_config_flow(
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
         {
-            "api_key": "sk-0000000000000000000",
+            CONF_API_KEY: "sk-0000000000000000000",
             "base_url": "http://llama-cublas.llama:8000/v1",
         },
     )
@@ -75,14 +86,22 @@ async def test_config_flow(
     assert result.get("type") is FlowResultType.CREATE_ENTRY
     assert result.get("title") == "Custom OpenAI"
     assert result.get("data") == {
-        "api_key": "sk-0000000000000000000",
+        CONF_API_KEY: "sk-0000000000000000000",
         "base_url": "http://llama-cublas.llama:8000/v1",
     }
-    assert result["options"] == {
-        **RECOMMENDED_OPTIONS,
-        CONF_CHAT_MODEL: "gpt-4",
-        CONF_STREAMING: True,
-    }
+    assert result["options"] == {}
+    assert result["subentries"] == [
+        {
+            "subentry_type": "conversation",
+            "data": {
+                **RECOMMENDED_OPTIONS,
+                CONF_CHAT_MODEL: "gpt-4",
+                CONF_STREAMING: True,
+            },
+            "title": DEFAULT_CONVERSATION_NAME,
+            "unique_id": None,
+        }
+    ]
 
     assert len(mock_setup.mock_calls) == 1
 
@@ -102,7 +121,7 @@ async def test_config_flow_fail_completion(
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
         {
-            "api_key": "sk-0000000000000000000",
+            CONF_API_KEY: "sk-0000000000000000000",
             "base_url": "http://llama-cublas.llama:8000/v1",
         },
     )
@@ -144,7 +163,7 @@ async def test_config_flow_no_streaming(
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
         {
-            "api_key": "sk-0000000000000000000",
+            CONF_API_KEY: "sk-0000000000000000000",
             "base_url": "http://llama-cublas.llama:8000/v1",
         },
     )
@@ -169,59 +188,184 @@ async def test_config_flow_no_streaming(
     assert result.get("type") is FlowResultType.CREATE_ENTRY
     assert result.get("title") == "Custom OpenAI"
     assert result.get("data") == {
-        "api_key": "sk-0000000000000000000",
+        CONF_API_KEY: "sk-0000000000000000000",
         "base_url": "http://llama-cublas.llama:8000/v1",
     }
-    assert result["options"] == {
-        **RECOMMENDED_OPTIONS,
-        CONF_CHAT_MODEL: "gpt-4",
-        CONF_STREAMING: False,
-    }
+    assert result["subentries"] == [
+        {
+            "subentry_type": "conversation",
+            "data": {
+                **RECOMMENDED_OPTIONS,
+                CONF_CHAT_MODEL: "gpt-4",
+                CONF_STREAMING: False,
+            },
+            "title": DEFAULT_CONVERSATION_NAME,
+            "unique_id": None,
+        }
+    ]
 
     assert len(mock_setup.mock_calls) == 1
 
 
-async def test_options(
+async def test_creating_conversation_subentry(
     hass: HomeAssistant,
+    setup_integration: None,
     mock_config_entry: MockConfigEntry,
 ) -> None:
-    """Test the options form."""
-    options_flow = await hass.config_entries.options.async_init(
-        mock_config_entry.entry_id
+    """Test creating a conversation subentry."""
+    mock_config_entry.add_to_hass(hass)
+
+    result = await hass.config_entries.subentries.async_init(
+        (mock_config_entry.entry_id, "conversation"),
+        context={"source": config_entries.SOURCE_USER},
     )
-    options = await hass.config_entries.options.async_configure(
-        options_flow["flow_id"],
-        {
-            "prompt": "Speak like a pirate",
-            "max_tokens": 200,
-        },
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "init"
+    assert not result["errors"]
+
+    result2 = await hass.config_entries.subentries.async_configure(
+        result["flow_id"],
+        {"name": "My Custom Agent", **RECOMMENDED_OPTIONS},
     )
     await hass.async_block_till_done()
-    assert options["type"] is FlowResultType.CREATE_ENTRY
-    assert options["data"]["prompt"] == "Speak like a pirate"
-    assert options["data"]["max_tokens"] == 200
-    assert options["data"][CONF_CHAT_MODEL] == RECOMMENDED_CHAT_MODEL
+
+    assert result2["type"] is FlowResultType.CREATE_ENTRY
+    assert result2["title"] == "My Custom Agent"
+
+    processed_options = RECOMMENDED_OPTIONS.copy()
+    processed_options[CONF_PROMPT] = processed_options[CONF_PROMPT].strip()
+
+    assert result2["data"] == processed_options
+
+
+async def test_creating_conversation_subentry_not_loaded(
+    hass: HomeAssistant,
+    setup_integration: None,
+    mock_config_entry: MockConfigEntry,
+) -> None:
+    """Test creating a conversation subentry when entry is not loaded."""
+    await hass.config_entries.async_unload(mock_config_entry.entry_id)
+    with patch(
+        "homeassistant.components.openai_conversation.config_flow.openai.resources.models.AsyncModels.list",
+        return_value=[],
+    ):
+        result = await hass.config_entries.subentries.async_init(
+            (mock_config_entry.entry_id, "conversation"),
+            context={"source": config_entries.SOURCE_USER},
+        )
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "entry_not_loaded"
 
 
 @pytest.mark.parametrize(
-    ("current_options", "new_options", "expected_options"),
+    "config_entry_options",
     [
+        {CONF_RECOMMENDED: True},
+    ],
+)
+async def test_subentry_recommended(
+    hass: HomeAssistant,
+    mock_config_entry: MockConfigEntry,
+    setup_integration: None,
+) -> None:
+    """Test the subentry flow with recommended settings."""
+    subentry = next(iter(mock_config_entry.subentries.values()))
+    subentry_flow = await mock_config_entry.start_subentry_reconfigure_flow(
+        hass, subentry.subentry_id
+    )
+    options = await hass.config_entries.subentries.async_configure(
+        subentry_flow["flow_id"],
+        {
+            "prompt": "Speak like a pirate",
+            CONF_RECOMMENDED: True,
+            CONF_LLM_HASS_API: [],
+        },
+    )
+    await hass.async_block_till_done()
+    assert options["type"] is FlowResultType.ABORT
+    assert options["reason"] == "reconfigure_successful"
+    assert subentry.data["prompt"] == "Speak like a pirate"
+
+
+@pytest.mark.parametrize(
+    ("config_entry_options", "new_options", "expected_options"),
+    [
+        (  # Test converting single llm api format to list
+            {
+                CONF_RECOMMENDED: True,
+                CONF_LLM_HASS_API: "assist",
+                CONF_PROMPT: "",
+            },
+            (
+                {
+                    CONF_RECOMMENDED: True,
+                    CONF_LLM_HASS_API: ["assist"],
+                    CONF_PROMPT: "",
+                },
+            ),
+            {
+                CONF_RECOMMENDED: True,
+                CONF_LLM_HASS_API: ["assist"],
+                CONF_PROMPT: "",
+                CONF_CHAT_MODEL: "gpt-3.5-turbo",
+            },
+        ),
+        (  # options with no model-specific settings
+            {
+                CONF_RECOMMENDED: True,
+            },
+            (
+                {
+                    CONF_RECOMMENDED: False,
+                    CONF_PROMPT: "Speak like a pirate",
+                },
+                {
+                    CONF_PROMPT: "Speak like a pirate",
+                    CONF_TEMPERATURE: 1.0,
+                    CONF_CHAT_MODEL: "gpt-4.5-preview",
+                    CONF_TOP_P: RECOMMENDED_TOP_P,
+                    CONF_MAX_TOKENS: RECOMMENDED_MAX_TOKENS,
+                },
+            ),
+            {
+                CONF_RECOMMENDED: False,
+                CONF_PROMPT: "Speak like a pirate",
+                CONF_TEMPERATURE: 1.0,
+                CONF_CHAT_MODEL: "gpt-4.5-preview",
+                CONF_TOP_P: RECOMMENDED_TOP_P,
+                CONF_MAX_TOKENS: RECOMMENDED_MAX_TOKENS,
+            },
+        ),
         (
             {
                 CONF_RECOMMENDED: True,
-                CONF_LLM_HASS_API: "none",
+                CONF_LLM_HASS_API: "assist",
                 CONF_PROMPT: "bla",
+                CONF_CHAT_MODEL: "gpt-4o",
             },
+            (
+                {
+                    CONF_RECOMMENDED: False,
+                    CONF_LLM_HASS_API: ["assist"],
+                    CONF_CHAT_MODEL: "gpt-4o",
+                    CONF_PROMPT: "bla",
+                },
+                {
+                    CONF_RECOMMENDED: False,
+                    CONF_PROMPT: "Speak like a pirate",
+                    CONF_CHAT_MODEL: "gpt-4o",
+                    CONF_LLM_HASS_API: ["assist"],
+                    CONF_TEMPERATURE: 0.3,
+                },
+            ),
             {
                 CONF_RECOMMENDED: False,
+                CONF_LLM_HASS_API: ["assist"],
                 CONF_PROMPT: "Speak like a pirate",
                 CONF_TEMPERATURE: 0.3,
-            },
-            {
-                CONF_RECOMMENDED: False,
-                CONF_PROMPT: "Speak like a pirate",
-                CONF_TEMPERATURE: 0.3,
-                CONF_CHAT_MODEL: RECOMMENDED_CHAT_MODEL,
+                CONF_CHAT_MODEL: "gpt-4o",
                 CONF_TOP_P: RECOMMENDED_TOP_P,
                 CONF_MAX_TOKENS: RECOMMENDED_MAX_TOKENS,
             },
@@ -230,49 +374,78 @@ async def test_options(
             {
                 CONF_RECOMMENDED: False,
                 CONF_PROMPT: "Speak like a pirate",
+                CONF_CHAT_MODEL: RECOMMENDED_CHAT_MODEL,
                 CONF_TEMPERATURE: 0.3,
-                CONF_CHAT_MODEL: "gpt-4",
                 CONF_TOP_P: RECOMMENDED_TOP_P,
                 CONF_MAX_TOKENS: RECOMMENDED_MAX_TOKENS,
             },
+            (
+                {
+                    CONF_RECOMMENDED: True,
+                    CONF_PROMPT: "Speak like a pirate",
+                    CONF_CHAT_MODEL: RECOMMENDED_CHAT_MODEL,
+                },
+                {
+                    CONF_RECOMMENDED: True,
+                    CONF_LLM_HASS_API: ["assist"],
+                    CONF_PROMPT: "",
+                    CONF_CHAT_MODEL: RECOMMENDED_CHAT_MODEL,
+                },
+            ),
             {
                 CONF_RECOMMENDED: True,
-                CONF_LLM_HASS_API: "assist",
+                CONF_LLM_HASS_API: ["assist"],
+                CONF_CHAT_MODEL: RECOMMENDED_CHAT_MODEL,
                 CONF_PROMPT: "",
-            },
-            {
-                CONF_RECOMMENDED: True,
-                CONF_LLM_HASS_API: "assist",
-                CONF_PROMPT: "",
-                CONF_CHAT_MODEL: "gpt-4",
             },
         ),
     ],
 )
-async def test_options_switching(
+async def test_subentry_switching(
     hass: HomeAssistant,
     mock_config_entry: MockConfigEntry,
-    current_options: dict[str, str | bool],
+    config_entry_options: dict[str, str | bool],
     new_options: dict[str, str | bool],
     expected_options: dict[str, str | bool],
+    setup_integration: None,
 ) -> None:
-    """Test the options form."""
-    hass.config_entries.async_update_entry(mock_config_entry, options=current_options)
-    options_flow = await hass.config_entries.options.async_init(
-        mock_config_entry.entry_id
+    """Test the subentry form."""
+    subentry = next(iter(mock_config_entry.subentries.values()))
+    subentry_flow = await mock_config_entry.start_subentry_reconfigure_flow(
+        hass, subentry.subentry_id
     )
-    if current_options.get(CONF_RECOMMENDED) != new_options.get(CONF_RECOMMENDED):
-        options_flow = await hass.config_entries.options.async_configure(
-            options_flow["flow_id"],
-            {
-                **current_options,
-                CONF_RECOMMENDED: new_options[CONF_RECOMMENDED],
-            },
+    assert subentry_flow["step_id"] == "init"
+
+    current_options = config_entry_options
+    i = 0
+    for step_options in new_options:
+        assert (
+            subentry_flow["type"] == FlowResultType.FORM
+        ), f"Expected {i} form, got {subentry_flow}"
+        i += 1
+
+        # Test that current options are showed as suggested values:
+        for key in subentry_flow["data_schema"].schema:
+            if (
+                isinstance(key.description, dict)
+                and "suggested_value" in key.description
+                and key in current_options
+                and key != CONF_RECOMMENDED
+            ):
+                current_option = current_options[key]
+                if key == CONF_LLM_HASS_API and isinstance(current_option, str):
+                    current_option = [current_option]
+                assert (
+                    key.description["suggested_value"] == current_option
+                ), f"Expected {key.description['suggested_value']} for {key}, got {current_option}"
+
+        # Configure current step
+        subentry_flow = await hass.config_entries.subentries.async_configure(
+            subentry_flow["flow_id"],
+            step_options,
         )
-    options = await hass.config_entries.options.async_configure(
-        options_flow["flow_id"],
-        new_options,
-    )
-    await hass.async_block_till_done()
-    assert options["type"] is FlowResultType.CREATE_ENTRY
-    assert options["data"] == expected_options
+        await hass.async_block_till_done()
+
+    assert subentry_flow["type"] is FlowResultType.ABORT
+    assert subentry_flow["reason"] == "reconfigure_successful"
+    assert subentry.data == expected_options

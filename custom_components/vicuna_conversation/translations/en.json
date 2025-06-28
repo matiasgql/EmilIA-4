@@ -24,29 +24,45 @@
           "chat_model": "Select the model to use."
         }
       }
+    },
+    "abort": {
+      "already_configured": "Service is already configured"
     }
   },
-  "options": {
-    "step": {
-      "init": {
-        "data": {
-          "prompt": "Instructions",
-          "chat_model": "Model",
-          "max_tokens": "Maximum tokens to return in response",
-          "temperature": "Temperature",
-          "top_p": "Top P",
-          "llm_hass_api": "Control Home Assistant",
-          "recommended": "Recommended model settings"
-        },
-        "data_description": {
-          "prompt": "Instruct how the LLM should respond. This can be a template.",
-          "chat_model": "Select the model to use.",
-          "max_tokens": "Select the maximum number of tokens to return.",
-          "temperature": "Select the temperature for response variability.",
-          "top_p": "Select the top P value for response diversity.",
-          "llm_hass_api": "Select the level of control over Home Assistant.",
-          "recommended": "Select whether to use recommended model settings."
+  "config_subentries": {
+    "conversation": {
+      "initiate_flow": {
+        "user": "Add conversation agent",
+        "reconfigure": "Reconfigure conversation agent"
+      },
+      "entry_type": "Conversation agent",
+      "step": {
+        "init": {
+          "data": {
+            "name": "[%key:common::config_flow::data::name%]",
+            "prompt": "Instructions",
+            "chat_model": "Model",
+            "max_tokens": "Maximum tokens to return in response",
+            "temperature": "Temperature",
+            "top_p": "Top P",
+            "llm_hass_api": "Control Home Assistant",
+            "recommended": "Recommended model settings"
+          },
+          "data_description": {
+            "prompt": "Instruct how the LLM should respond. This can be a template.",
+            "chat_model": "Select the model to use.",
+            "max_tokens": "Select the maximum number of tokens to return.",
+            "temperature": "Select the temperature for response variability.",
+            "top_p": "Select the top P value for response diversity.",
+            "llm_hass_api": "Select the level of control over Home Assistant.",
+            "recommended": "Select whether to use recommended model settings."
+          }
         }
+      },
+      "abort": {
+        "entry_not_loaded": "Cannot add things while the configuration is disabled.",
+        "reconfigure_successful": "Re-configuration was successful",
+        "reauth_successful": "Re-authentication was successful"
       }
     }
   }

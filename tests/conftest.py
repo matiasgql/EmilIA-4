@@ -26,6 +26,7 @@ from pytest_homeassistant_custom_component.common import (
 
 from custom_components.vicuna_conversation.const import (
     DOMAIN,
+    DEFAULT_CONVERSATION_NAME,
 )
 
 
@@ -81,7 +82,7 @@ def mock_platforms() -> list[Platform]:
 @pytest.fixture(name="setup_integration")
 async def mock_setup_integration(
     hass: HomeAssistant,
-    config_entry: MockConfigEntry,
+    mock_config_entry: MockConfigEntry,
     platforms: list[Platform],
 ) -> None:
     """Set up the integration."""
@@ -112,12 +113,21 @@ async def mock_config_entry_fixture(
 ) -> MockConfigEntry:
     """Fixture to create a configuration entry."""
     config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="OpenAI Custom Conversation",
         data={
             **CONFIG_ENTRY_DATA,
             **config_entry_data,
         },
-        domain=DOMAIN,
-        options=config_entry_options,
+        version=2,
+        subentries_data=[
+            {
+                "data": {**config_entry_options},
+                "subentry_type": "conversation",
+                "title": DEFAULT_CONVERSATION_NAME,
+                "unique_id": None,
+            }
+        ],
     )
     config_entry.add_to_hass(hass)
     return config_entry
