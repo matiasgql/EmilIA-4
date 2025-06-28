@@ -7,12 +7,10 @@ from unittest.mock import patch, Mock
 
 import pytest
 
-from homeassistant.const import Platform
 from homeassistant.core import (
     HomeAssistant,
 )
 from homeassistant.helpers import (
-    config_validation as cv,
     device_registry as dr,
     entity_registry as er,
 )
@@ -24,12 +22,6 @@ from pytest_homeassistant_custom_component.common import (
 from custom_components.vicuna_conversation.const import (
     DOMAIN,
 )
-
-SERVICE_GENERATE_IMAGE = "generate_image"
-SERVICE_GENERATE_CONTENT = "generate_content"
-
-PLATFORMS = (Platform.CONVERSATION,)
-CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 @pytest.fixture(name="mock_setup")

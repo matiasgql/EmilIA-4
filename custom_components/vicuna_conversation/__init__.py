@@ -13,6 +13,7 @@ from homeassistant.const import Platform, CONF_API_KEY
 from homeassistant.helpers import (
     device_registry as dr,
     entity_registry as er,
+    config_validation as cv,
 )
 
 from .const import (
@@ -26,6 +27,7 @@ __all__ = [
 
 _LOGGER = logging.getLogger(__name__)
 PLATFORMS = (Platform.CONVERSATION,)
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
