@@ -24,11 +24,10 @@
           "chat_model": "Select the model to use."
         }
       }
+    },
+    "abort": {
+      "already_configured": "Service is already configured"
     }
-  },
-  "abort": {
-    "already_configured": "Service is already configured",
-    "reauth_successful": "Re-authentication was successful"
   },
   "config_subentries": {
     "conversation": {
@@ -62,7 +61,8 @@
       },
       "abort": {
         "entry_not_loaded": "Cannot add things while the configuration is disabled.",
-        "reconfigure_successful": "[%key:common::config_flow::abort::reconfigure_successful%]"
+        "reconfigure_successful": "Re-configuration was successful",
+        "reauth_successful": "Re-authentication was successful"
       }
     }
   }
