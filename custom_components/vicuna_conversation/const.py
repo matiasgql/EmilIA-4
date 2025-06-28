@@ -7,6 +7,7 @@ LOGGER = logging.getLogger(__package__)
 
 CONF_RECOMMENDED = "recommended"
 CONF_PROMPT = "prompt"
+DEFAULT_CONVERSATION_NAME = "Custom OpenAI Conversation"
 CONF_CHAT_MODEL = "chat_model"
 RECOMMENDED_CHAT_MODELS = [
     "gpt-3.5-turbo",

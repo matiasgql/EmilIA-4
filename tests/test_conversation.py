@@ -93,14 +93,15 @@ async def test_conversation_entity(
             "hello",
             mock_chat_log.conversation_id,
             Context(),
-            agent_id="conversation.mock_title",
+            agent_id="conversation.custom_openai_conversation",
         )
 
     assert result.response.response_type == intent.IntentResponseType.ACTION_DONE
     # Don't test the prompt, as it's not deterministic
     assert mock_chat_log.content[1:] == snapshot
 
-@pytest.mark.parametrize(("config_entry_options"), [(ASSIST_OPTIONS)])
+
+@pytest.mark.parametrize(("config_entry_options"), [ASSIST_OPTIONS])
 async def test_function_call(
     hass: HomeAssistant,
     mock_chat_log: MockChatLog,  # noqa: F811
@@ -185,7 +186,7 @@ async def test_function_call(
             "Please call the test function",
             mock_chat_log.conversation_id,
             Context(),
-            agent_id="conversation.mock_title",
+            agent_id="conversation.custom_openai_conversation",
         )
 
     assert result.response.response_type == intent.IntentResponseType.ACTION_DONE
@@ -193,7 +194,7 @@ async def test_function_call(
     assert mock_chat_log.content[1:] == snapshot
 
 
-@pytest.mark.parametrize(("config_entry_options"), [(ASSIST_OPTIONS)])
+@pytest.mark.parametrize(("config_entry_options"), [ASSIST_OPTIONS])
 @pytest.mark.parametrize(
     ("tool_arguments"),
     [
@@ -279,14 +280,14 @@ async def test_function_exception(
             "Please call the test function",
             "conversation-id",
             Context(),
-            agent_id="conversation.mock_title",
+            agent_id="conversation.custom_openai_conversation",
         )
 
     assert result.response.response_type == intent.IntentResponseType.ERROR, result
     assert result.response.speech["plain"]["speech"] == snapshot
 
 
-@pytest.mark.parametrize(("config_entry_options"), [(ASSIST_OPTIONS)])
+@pytest.mark.parametrize(("config_entry_options"), [ASSIST_OPTIONS])
 async def test_assist_api_tools_conversion(
     hass: HomeAssistant,
     mock_config_entry: MockConfigEntry,
@@ -339,21 +340,22 @@ async def test_assist_api_tools_conversion(
     assert tools
 
 
+@pytest.mark.parametrize(("config_entry_options"), [{CONF_STREAMING: True}])
 async def test_streaming_response(
     hass: HomeAssistant,
     mock_chat_log: MockChatLog,
     mock_config_entry: MockConfigEntry,
 ) -> None:
     """Test streaming response from the assistant."""
-    # Enable streaming in config
-    hass.config_entries.async_update_entry(
-        mock_config_entry,
-        options={
-            **mock_config_entry.options,
-            CONF_STREAMING: True,
-        },
-    )
-    await hass.async_block_till_done()
+    # # Enable streaming in config
+    # hass.config_entries.async_update_entry(
+    #     mock_config_entry,
+    #     options={
+    #         **mock_config_entry.options,
+    #         CONF_STREAMING: True,
+    #     },
+    # )
+    # await hass.async_block_till_done()
 
     # Create mock streaming response
     async def mock_stream():
@@ -409,7 +411,7 @@ async def test_streaming_response(
             "hello",
             mock_chat_log.conversation_id,
             Context(),
-            agent_id="conversation.mock_title",
+            agent_id="conversation.custom_openai_conversation",
         )
 
     assert result.response.response_type == intent.IntentResponseType.ACTION_DONE
@@ -424,21 +426,15 @@ async def test_streaming_response(
     assert content[1].content == "Hello world"
 
 
+@pytest.mark.parametrize(
+    ("config_entry_options"), [{CONF_LLM_HASS_API: ["non-existing"]}]
+)
 async def test_unknown_hass_api(
     hass: HomeAssistant,
     mock_config_entry: MockConfigEntry,
     snapshot: SnapshotAssertion,
 ) -> None:
     """Test when we reference an API that no longer exists."""
-    hass.config_entries.async_update_entry(
-        mock_config_entry,
-        options={
-            **mock_config_entry.options,
-            CONF_LLM_HASS_API: "non-existing",
-        },
-    )
-    await hass.async_block_till_done()  # Integration may reload
-
     result = await conversation.async_converse(
         hass, "hello", "conversation-id", Context(), agent_id=mock_config_entry.entry_id
     )

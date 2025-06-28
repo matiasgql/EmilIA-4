@@ -2,15 +2,15 @@
 # name: test_conversation_entity
   list([
     UserContent(role='user', content='hello'),
-    AssistantContent(role='assistant', agent_id='conversation.mock_title', content='Hello, how can I help you?', tool_calls=None),
+    AssistantContent(role='assistant', agent_id='conversation.custom_openai_conversation', content='Hello, how can I help you?', tool_calls=None),
   ])
 # ---
 # name: test_function_call[config_entry_options0]
   list([
     UserContent(role='user', content='Please call the test function'),
-    AssistantContent(role='assistant', agent_id='conversation.mock_title', content=None, tool_calls=[ToolInput(tool_name='test_tool', tool_args={'param1': 'call1'}, id='call_call_1')]),
-    ToolResultContent(role='tool_result', agent_id='conversation.mock_title', tool_call_id='call_call_1', tool_name='test_tool', tool_result='value1'),
-    AssistantContent(role='assistant', agent_id='conversation.mock_title', content='I have successfully called the function', tool_calls=None),
+    AssistantContent(role='assistant', agent_id='conversation.custom_openai_conversation', content=None, tool_calls=[ToolInput(tool_name='test_tool', tool_args={'param1': 'call1'}, id='call_call_1')]),
+    ToolResultContent(role='tool_result', agent_id='conversation.custom_openai_conversation', tool_call_id='call_call_1', tool_name='test_tool', tool_result='value1'),
+    AssistantContent(role='assistant', agent_id='conversation.custom_openai_conversation', content='I have successfully called the function', tool_calls=None),
   ])
 # ---
 # name: test_function_exception[-config_entry_options0]
@@ -19,7 +19,7 @@
 # name: test_function_exception[{"para-config_entry_options0]
   'Unexpected tool argument response: Unterminated string starting at: line 1 column 2 (char 1)'
 # ---
-# name: test_unknown_hass_api
+# name: test_unknown_hass_api[config_entry_options0]
   dict({
     'continue_conversation': False,
     'conversation_id': 'conversation-id',
