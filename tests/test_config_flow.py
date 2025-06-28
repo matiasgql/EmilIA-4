@@ -234,7 +234,10 @@ async def test_creating_conversation_subentry(
     assert result2["title"] == "My Custom Agent"
 
     processed_options = RECOMMENDED_OPTIONS.copy()
-    processed_options[CONF_PROMPT] = processed_options[CONF_PROMPT].strip()
+    processed_options.update({
+        CONF_PROMPT: processed_options[CONF_PROMPT].strip(),
+        CONF_STREAMING: True,
+    })
 
     assert result2["data"] == processed_options
 
@@ -297,6 +300,7 @@ async def test_subentry_recommended(
                 CONF_RECOMMENDED: True,
                 CONF_LLM_HASS_API: "assist",
                 CONF_PROMPT: "",
+                CONF_STREAMING: True,
             },
             (
                 {
@@ -310,11 +314,13 @@ async def test_subentry_recommended(
                 CONF_LLM_HASS_API: ["assist"],
                 CONF_PROMPT: "",
                 CONF_CHAT_MODEL: "gpt-3.5-turbo",
+                CONF_STREAMING: True,
             },
         ),
         (  # options with no model-specific settings
             {
                 CONF_RECOMMENDED: True,
+                CONF_STREAMING: True,
             },
             (
                 {
@@ -336,6 +342,7 @@ async def test_subentry_recommended(
                 CONF_CHAT_MODEL: "gpt-4.5-preview",
                 CONF_TOP_P: RECOMMENDED_TOP_P,
                 CONF_MAX_TOKENS: RECOMMENDED_MAX_TOKENS,
+                CONF_STREAMING: True,
             },
         ),
         (
@@ -344,6 +351,7 @@ async def test_subentry_recommended(
                 CONF_LLM_HASS_API: "assist",
                 CONF_PROMPT: "bla",
                 CONF_CHAT_MODEL: "gpt-4o",
+                CONF_STREAMING: True,
             },
             (
                 {
@@ -368,6 +376,7 @@ async def test_subentry_recommended(
                 CONF_CHAT_MODEL: "gpt-4o",
                 CONF_TOP_P: RECOMMENDED_TOP_P,
                 CONF_MAX_TOKENS: RECOMMENDED_MAX_TOKENS,
+                CONF_STREAMING: True,
             },
         ),
         (
@@ -378,6 +387,7 @@ async def test_subentry_recommended(
                 CONF_TEMPERATURE: 0.3,
                 CONF_TOP_P: RECOMMENDED_TOP_P,
                 CONF_MAX_TOKENS: RECOMMENDED_MAX_TOKENS,
+                CONF_STREAMING: True,
             },
             (
                 {
@@ -397,6 +407,7 @@ async def test_subentry_recommended(
                 CONF_LLM_HASS_API: ["assist"],
                 CONF_CHAT_MODEL: RECOMMENDED_CHAT_MODEL,
                 CONF_PROMPT: "",
+                CONF_STREAMING: True,
             },
         ),
     ],
@@ -419,9 +430,9 @@ async def test_subentry_switching(
     current_options = config_entry_options
     i = 0
     for step_options in new_options:
-        assert (
-            subentry_flow["type"] == FlowResultType.FORM
-        ), f"Expected {i} form, got {subentry_flow}"
+        assert subentry_flow["type"] == FlowResultType.FORM, (
+            f"Expected {i} form, got {subentry_flow}"
+        )
         i += 1
 
         # Test that current options are showed as suggested values:
@@ -435,9 +446,9 @@ async def test_subentry_switching(
                 current_option = current_options[key]
                 if key == CONF_LLM_HASS_API and isinstance(current_option, str):
                     current_option = [current_option]
-                assert (
-                    key.description["suggested_value"] == current_option
-                ), f"Expected {key.description['suggested_value']} for {key}, got {current_option}"
+                assert key.description["suggested_value"] == current_option, (
+                    f"Expected {key.description['suggested_value']} for {key}, got {current_option}"
+                )
 
         # Configure current step
         subentry_flow = await hass.config_entries.subentries.async_configure(
