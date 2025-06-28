@@ -300,6 +300,7 @@ async def test_subentry_recommended(
                 CONF_RECOMMENDED: True,
                 CONF_LLM_HASS_API: "assist",
                 CONF_PROMPT: "",
+                CONF_STREAMING: True,
             },
             (
                 {
@@ -313,11 +314,13 @@ async def test_subentry_recommended(
                 CONF_LLM_HASS_API: ["assist"],
                 CONF_PROMPT: "",
                 CONF_CHAT_MODEL: "gpt-3.5-turbo",
+                CONF_STREAMING: True,
             },
         ),
         (  # options with no model-specific settings
             {
                 CONF_RECOMMENDED: True,
+                CONF_STREAMING: True,
             },
             (
                 {
@@ -339,6 +342,7 @@ async def test_subentry_recommended(
                 CONF_CHAT_MODEL: "gpt-4.5-preview",
                 CONF_TOP_P: RECOMMENDED_TOP_P,
                 CONF_MAX_TOKENS: RECOMMENDED_MAX_TOKENS,
+                CONF_STREAMING: True,
             },
         ),
         (
@@ -347,6 +351,7 @@ async def test_subentry_recommended(
                 CONF_LLM_HASS_API: "assist",
                 CONF_PROMPT: "bla",
                 CONF_CHAT_MODEL: "gpt-4o",
+                CONF_STREAMING: True,
             },
             (
                 {
@@ -371,6 +376,7 @@ async def test_subentry_recommended(
                 CONF_CHAT_MODEL: "gpt-4o",
                 CONF_TOP_P: RECOMMENDED_TOP_P,
                 CONF_MAX_TOKENS: RECOMMENDED_MAX_TOKENS,
+                CONF_STREAMING: True,
             },
         ),
         (
@@ -381,6 +387,7 @@ async def test_subentry_recommended(
                 CONF_TEMPERATURE: 0.3,
                 CONF_TOP_P: RECOMMENDED_TOP_P,
                 CONF_MAX_TOKENS: RECOMMENDED_MAX_TOKENS,
+                CONF_STREAMING: True,
             },
             (
                 {
@@ -400,6 +407,7 @@ async def test_subentry_recommended(
                 CONF_LLM_HASS_API: ["assist"],
                 CONF_CHAT_MODEL: RECOMMENDED_CHAT_MODEL,
                 CONF_PROMPT: "",
+                CONF_STREAMING: True,
             },
         ),
     ],
@@ -449,7 +457,6 @@ async def test_subentry_switching(
         )
         await hass.async_block_till_done()
 
-    expected_options[CONF_STREAMING] = True  # this is added during reconfiguration
     assert subentry_flow["type"] is FlowResultType.ABORT
     assert subentry_flow["reason"] == "reconfigure_successful"
     assert subentry.data == expected_options
