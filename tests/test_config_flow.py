@@ -235,8 +235,8 @@ async def test_creating_conversation_subentry(
 
     processed_options = RECOMMENDED_OPTIONS.copy()
     processed_options.update({
-        CONF_PROMPT: = processed_options[CONF_PROMPT].strip()
-        CONF_STREAMING: True
+        CONF_PROMPT: processed_options[CONF_PROMPT].strip(),
+        CONF_STREAMING: True,
     })
 
     assert result2["data"] == processed_options
