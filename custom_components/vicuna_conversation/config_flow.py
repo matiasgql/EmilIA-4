@@ -254,6 +254,13 @@ class ConversationSubentryFlowHandler(ConfigSubentryFlow):
         options = self.options
 
         if user_input is not None:
+            model = user_input[CONF_CHAT_MODEL]
+            stream_support = await async_validate_completions(
+                self._openai_client,
+                model=model,
+                stream=True,
+            )
+            user_input[CONF_STREAMING] = stream_support
             if user_input[CONF_RECOMMENDED] == self.last_rendered_recommended:
                 if self._is_new:
                     return self.async_create_entry(
