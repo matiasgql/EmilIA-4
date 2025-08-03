@@ -323,7 +323,7 @@ class CustomOpenAIBaseLLMEntity(Entity):
                         # Convert string content to list with text and files
                         messages[i]["content"] = [  # type: ignore[arg-type]
                             {"type": "text", "text": current_content},
-                            *files,  # type: ignore[list-tem]
+                            *files,  # type: ignore[list-item]
                         ]
                     break
 
