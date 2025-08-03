@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Generator
 from unittest.mock import patch, Mock
+from typing import Any
 
 import pytest
 

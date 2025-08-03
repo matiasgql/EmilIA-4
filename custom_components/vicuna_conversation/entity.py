@@ -74,7 +74,7 @@ def _format_structured_output(
     structure: vol.Schema, llm_api: llm.APIInstance | None
 ) -> dict[str, Any]:
     """Format structured output specification."""
-    return convert(
+    return convert(  # type: ignore[no-any-return]
         structure, custom_serializer=llm_api.custom_serializer if llm_api else None
     )
 
@@ -321,9 +321,9 @@ class CustomOpenAIBaseLLMEntity(Entity):
                     current_content = messages[i]["content"]
                     if isinstance(current_content, str):
                         # Convert string content to list with text and files
-                        messages[i]["content"] = [
+                        messages[i]["content"] = [  # type: ignore[arg-type]
                             {"type": "text", "text": current_content},
-                            *files,
+                            *files,  # type: ignore[list-tem]
                         ]
                     break
 

@@ -23,7 +23,6 @@ from .const import (
     DEFAULT_AI_TASK_NAME,
     DOMAIN,
     RECOMMENDED_AI_TASK_OPTIONS,
-    RECOMMENDED_CHAT_MODEL,
 )
 from .openai_client import async_create_client, async_list_models
 
