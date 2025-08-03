@@ -151,11 +151,11 @@ def _convert_content_to_param(
         role: Literal["system", "user", "assistant", "developer"] = content.role
         if role == "system":
             return ChatCompletionSystemMessageParam(
-                role="system", content=content.content
+                role="system", content=content.content or ""
             )
         return cast(
             ChatCompletionMessageParam,
-            {"role": content.role, "content": content.content},
+            {"role": content.role, "content": content.content or ""},
         )
 
     # Handle the Assistant content including tool calls.

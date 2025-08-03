@@ -2,24 +2,6 @@
 
 from typing import Literal
 
-import openai
-from openai._streaming import AsyncStream
-from openai._types import NOT_GIVEN
-from openai.types.chat import (
-    ChatCompletionChunk,
-    ChatCompletionMessageParam,
-    ChatCompletionAssistantMessageParam,
-    ChatCompletionMessage,
-    ChatCompletionMessageToolCallParam,
-    ChatCompletionSystemMessageParam,
-    ChatCompletionToolMessageParam,
-    ChatCompletionToolParam,
-    ChatCompletionUserMessageParam,
-)
-from openai.types.chat.chat_completion_message_tool_call_param import Function
-from openai.types.shared_params import FunctionDefinition
-from voluptuous_openapi import convert
-
 from homeassistant.components import conversation
 from homeassistant.config_entries import ConfigEntry, ConfigSubentry
 from homeassistant.const import MATCH_ALL, CONF_LLM_HASS_API
