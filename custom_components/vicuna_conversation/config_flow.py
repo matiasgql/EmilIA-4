@@ -37,6 +37,8 @@ from .const import (
     CONF_PROMPT,
     CONF_RECOMMENDED,
     CONF_TEMPERATURE,
+    CONF_BROWSER_SEARCH_ENABLED,
+    CONF_CODE_INTERPRETER_ENABLED,
     CONF_TOP_P,
     CONF_BASE_URL,
     CONF_STREAMING,
@@ -49,6 +51,8 @@ from .const import (
     RECOMMENDED_CHAT_MODELS,
     RECOMMENDED_MAX_TOKENS,
     RECOMMENDED_TEMPERATURE,
+    RECOMMENDED_BROWSER_SEARCH_ENABLED,
+    RECOMMENDED_CODE_INTERPRETER_ENABLED,
     RECOMMENDED_TOP_P,
     LOGGER,
 )
@@ -419,6 +423,17 @@ def openai_config_option_schema(
                 description={"suggested_value": options.get(CONF_TEMPERATURE)},
                 default=RECOMMENDED_TEMPERATURE,
             ): NumberSelector(NumberSelectorConfig(min=0, max=2, step=0.05)),
+            vol.Optional(
+                CONF_BROWSER_SEARCH_ENABLED,
+                description={"suggested_value": options.get(CONF_BROWSER_SEARCH_ENABLED)},
+                default=RECOMMENDED_BROWSER_SEARCH_ENABLED,
+            ): bool,
+            vol.Optional(
+                CONF_CODE_INTERPRETER_ENABLED,
+                description={"suggested_value": options.get(CONF_CODE_INTERPRETER_ENABLED)},
+                default=RECOMMENDED_CODE_INTERPRETER_ENABLED,
+            ): bool,
         }
     )
+    
     return schema

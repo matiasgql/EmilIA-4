@@ -40,6 +40,8 @@ from .const import (
     CONF_CHAT_MODEL,
     CONF_MAX_TOKENS,
     CONF_TEMPERATURE,
+    CONF_BROWSER_SEARCH_ENABLED,
+    CONF_CODE_INTERPRETER_ENABLED,
     CONF_TOP_P,
     CONF_STREAMING,
     DOMAIN,
@@ -294,6 +296,10 @@ class CustomOpenAIBaseLLMEntity(Entity):
                 _format_tool(tool, chat_log.llm_api.custom_serializer)
                 for tool in chat_log.llm_api.tools
             ]
+            if options.get(CONF_BROWSER_SEARCH_ENABLED):
+                tools.append({"type": "browser_search"})
+            if options.get(CONF_CODE_INTERPRETER_ENABLED):
+                tools.append({"type": "code_interpreter"})
 
         model = options.get(CONF_CHAT_MODEL, RECOMMENDED_CHAT_MODEL)
         messages = [
