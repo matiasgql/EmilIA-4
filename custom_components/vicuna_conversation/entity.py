@@ -21,10 +21,10 @@ from openai.types.chat import (
     ChatCompletionMessageToolCallParam,
     ChatCompletionSystemMessageParam,
     ChatCompletionToolMessageParam,
-    ChatCompletionToolParam,
+    ChatCompletionFunctionToolParam,
     ChatCompletionUserMessageParam,
 )
-from openai.types.chat.chat_completion_message_tool_call_param import Function
+from openai.types.chat.chat_completion_message_function_tool_call import Function
 from openai.types.shared_params import FunctionDefinition
 import voluptuous as vol
 from voluptuous_openapi import convert
@@ -63,7 +63,7 @@ _LOGGER = logging.getLogger(__name__)
 def _format_tool(
     tool: llm.Tool,
     custom_serializer: Callable[[Any], Any] | None,
-) -> ChatCompletionToolParam:
+) -> ChatCompletionFunctionToolParam:
     """Format tool specification."""
     tool_spec = FunctionDefinition(
         name=tool.name,
@@ -71,7 +71,7 @@ def _format_tool(
     )
     if tool.description:
         tool_spec["description"] = tool.description
-    return ChatCompletionToolParam(type="function", function=tool_spec)
+    return ChatCompletionFunctionToolParam(type="function", function=tool_spec)
 
 
 def _format_structured_output(
@@ -292,7 +292,7 @@ class CustomOpenAIBaseLLMEntity(Entity):
         """Generate an answer for the chat log."""
         options = self.subentry.data
 
-        tools: list[ChatCompletionToolParam] | None = None
+        tools: list[ChatCompletionFunctionToolParam] | None = None
         if chat_log.llm_api:
             tools = [
                 _format_tool(tool, chat_log.llm_api.custom_serializer)
