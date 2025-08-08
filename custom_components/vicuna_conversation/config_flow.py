@@ -442,7 +442,7 @@ def openai_config_option_schema(
                 CONF_REASONING,
                 description={"suggested_value": options.get(CONF_REASONING)},
                 default=RECOMMENDED_REASONING,
-            ): SelectSelector(SelectSelectorConfig(options=[None, "low", "medium", "high"])),
+            ): SelectSelector(SelectSelectorConfig(options=["", "low", "medium", "high"])),
         }
     )
     
