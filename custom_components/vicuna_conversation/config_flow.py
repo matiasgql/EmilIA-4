@@ -59,8 +59,6 @@ from .const import (
     LOGGER,
 )
 
-from .const import Reasoning
-
 from .openai_client import (
     async_create_client,
     async_list_models,
@@ -442,7 +440,7 @@ def openai_config_option_schema(
                 CONF_REASONING,
                 description={"suggested_value": options.get(CONF_REASONING)},
                 default=RECOMMENDED_REASONING,
-            ): SelectSelector(SelectSelectorConfig(options=["", "low", "medium", "high"])),
+            ): SelectSelector(SelectSelectorConfig(options=["low", "medium", "high"], mode=SelectSelectorMode.DROPDOWN,)),
         }
     )
     
