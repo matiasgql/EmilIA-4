@@ -39,6 +39,7 @@ from .const import (
     CONF_TEMPERATURE,
     CONF_BROWSER_SEARCH_ENABLED,
     CONF_CODE_INTERPRETER_ENABLED,
+    CONF_REASONING,
     CONF_TOP_P,
     CONF_BASE_URL,
     CONF_STREAMING,
@@ -53,9 +54,13 @@ from .const import (
     RECOMMENDED_TEMPERATURE,
     RECOMMENDED_BROWSER_SEARCH_ENABLED,
     RECOMMENDED_CODE_INTERPRETER_ENABLED,
+    RECOMMENDED_REASONING,
     RECOMMENDED_TOP_P,
     LOGGER,
 )
+
+from .const import Reasoning
+
 from .openai_client import (
     async_create_client,
     async_list_models,
@@ -433,6 +438,11 @@ def openai_config_option_schema(
                 description={"suggested_value": options.get(CONF_CODE_INTERPRETER_ENABLED)},
                 default=RECOMMENDED_CODE_INTERPRETER_ENABLED,
             ): bool,
+            vol.Optional(
+                CONF_REASONING,
+                description={"suggested_value": options.get(CONF_REASONING)},
+                default=RECOMMENDED_REASONING,
+            ): Reasoning,
         }
     )
     

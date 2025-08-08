@@ -40,6 +40,7 @@ from .const import (
     CONF_CHAT_MODEL,
     CONF_MAX_TOKENS,
     CONF_TEMPERATURE,
+    CONF_REASONING,
     CONF_BROWSER_SEARCH_ENABLED,
     CONF_CODE_INTERPRETER_ENABLED,
     CONF_TOP_P,
@@ -48,6 +49,7 @@ from .const import (
     RECOMMENDED_CHAT_MODEL,
     RECOMMENDED_MAX_TOKENS,
     RECOMMENDED_TEMPERATURE,
+    RECOMMENDED_REASONING,
     RECOMMENDED_TOP_P,
     LOGGER,
 )
@@ -343,6 +345,7 @@ class CustomOpenAIBaseLLMEntity(Entity):
                     model=model,
                     messages=messages,
                     tools=tools or NOT_GIVEN,
+                    reasoning_effort= options.get(CONF_REASONING, RECOMMENDED_REASONING),
                     response_format=response_format,
                     max_tokens=options.get(CONF_MAX_TOKENS, RECOMMENDED_MAX_TOKENS),
                     top_p=options.get(CONF_TOP_P, RECOMMENDED_TOP_P),

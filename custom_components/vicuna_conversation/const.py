@@ -3,6 +3,13 @@
 import logging
 from typing import Final
 
+from enum import Enum
+
+class Reasoning(Enum):
+    OFF = None
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
 
 DOMAIN = "vicuna_conversation"
 LOGGER = logging.getLogger(__package__)
@@ -15,6 +22,7 @@ CONF_PROMPT = "prompt"
 CONF_TEMPERATURE = "temperature"
 CONF_BROWSER_SEARCH_ENABLED = "Browser Search"
 CONF_CODE_INTERPRETER_ENABLED = "Code Interpreter"
+CONF_REASONING= "REASONING EFFORT"
 CONF_TOP_P = "top_p"
 CONF_BASE_URL = "base_url"
 CONF_RECOMMENDED = "recommended"
@@ -30,6 +38,7 @@ RECOMMENDED_TEMPERATURE = 0.7
 RECOMMENDED_TOP_P = 1.0
 RECOMMENDED_BROWSER_SEARCH_ENABLED = False
 RECOMMENDED_CODE_INTERPRETER_ENABLED = False
+RECOMMENDED_REASONING = Reasoning.OFF
 
 DEFAULT_AI_TASK_NAME: Final = "Custom OpenAI AI Task"
 RECOMMENDED_AI_TASK_OPTIONS = {
