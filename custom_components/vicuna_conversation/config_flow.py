@@ -442,7 +442,7 @@ def openai_config_option_schema(
                 CONF_REASONING,
                 description={"suggested_value": options.get(CONF_REASONING)},
                 default=RECOMMENDED_REASONING,
-            ): Reasoning,
+            ): Reasoning._member_names_,
         }
     )
     
