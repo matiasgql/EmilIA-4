@@ -18,7 +18,7 @@ from openai.types.chat import (
     ChatCompletionMessageParam,
     ChatCompletionAssistantMessageParam,
     ChatCompletionMessage,
-    ChatCompletionMessageToolCallParam,
+    ChatCompletionMessageToolCallUnionParam,
     ChatCompletionSystemMessageParam,
     ChatCompletionToolMessageParam,
     ChatCompletionFunctionToolParam,
@@ -111,7 +111,7 @@ def _convert_content_to_chat_message(
         )
         if isinstance(content, conversation.AssistantContent) and content.tool_calls:
             param["tool_calls"] = [
-                ChatCompletionMessageToolCallParam(
+                ChatCompletionMessageToolCallUnionParam(
                     type="function",
                     id=tool_call.id,
                     function=Function(
@@ -182,7 +182,7 @@ def _convert_content_to_param(
         role="assistant",
         content=content.content,
         tool_calls=[
-            ChatCompletionMessageToolCallParam(
+            ChatCompletionMessageToolCallUnionParam(
                 id=tool_call.id,
                 function=Function(
                     arguments=json.dumps(tool_call.tool_args),
