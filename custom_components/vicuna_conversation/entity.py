@@ -349,18 +349,31 @@ class CustomOpenAIBaseLLMEntity(Entity):
 
         for _iteration in range(MAX_TOOL_ITERATIONS):
             try:
-                result = await client.chat.completions.create(
-                    model=model,
-                    messages=messages,
-                    tools=tools or NOT_GIVEN,
-                    reasoning_effort= options.get(CONF_REASONING, RECOMMENDED_REASONING),
-                    response_format=response_format,
-                    max_tokens=options.get(CONF_MAX_TOKENS, RECOMMENDED_MAX_TOKENS),
-                    top_p=options.get(CONF_TOP_P, RECOMMENDED_TOP_P),
-                    temperature=options.get(CONF_TEMPERATURE, RECOMMENDED_TEMPERATURE),
-                    user=chat_log.conversation_id,
-                    stream=options.get(CONF_STREAMING),
-                )
+                if CONF_REASONING == "NO":
+                    result = await client.chat.completions.create(
+                        model=model,
+                        messages=messages,
+                        tools=tools or NOT_GIVEN,
+                        response_format=response_format,
+                        max_tokens=options.get(CONF_MAX_TOKENS, RECOMMENDED_MAX_TOKENS),
+                        top_p=options.get(CONF_TOP_P, RECOMMENDED_TOP_P),
+                        temperature=options.get(CONF_TEMPERATURE, RECOMMENDED_TEMPERATURE),
+                        user=chat_log.conversation_id,
+                        stream=options.get(CONF_STREAMING),
+                    )
+                else:
+                    result = await client.chat.completions.create(
+                        model=model,
+                        messages=messages,
+                        tools=tools or NOT_GIVEN,
+                        response_format=response_format,
+                        reasoning_effort= options.get(CONF_REASONING, RECOMMENDED_REASONING),
+                        max_tokens=options.get(CONF_MAX_TOKENS, RECOMMENDED_MAX_TOKENS),
+                        top_p=options.get(CONF_TOP_P, RECOMMENDED_TOP_P),
+                        temperature=options.get(CONF_TEMPERATURE, RECOMMENDED_TEMPERATURE),
+                        user=chat_log.conversation_id,
+                        stream=options.get(CONF_STREAMING),
+                    )
             except openai.OpenAIError as err:
                 LOGGER.error("Error talking to API: %s", err)
                 raise HomeAssistantError("Error talking to API") from err
