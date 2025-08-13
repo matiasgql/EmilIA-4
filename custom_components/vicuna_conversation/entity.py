@@ -19,7 +19,6 @@ from openai.types.chat import (
     ChatCompletionAssistantMessageParam,
     ChatCompletionMessage,
     ChatCompletionMessageToolCallParam,
-    ChatCompletionMessageFunctionToolCall,
     ChatCompletionSystemMessageParam,
     ChatCompletionToolMessageParam,
     ChatCompletionFunctionToolParam,
