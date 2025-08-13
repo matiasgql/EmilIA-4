@@ -8,7 +8,7 @@ import json
 import logging
 import mimetypes
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import Any, Literal, TypedDict, Union, cast
 
 import openai
 from openai._streaming import AsyncStream
@@ -284,7 +284,15 @@ class CustomOpenAIBaseLLMEntity(Entity):
             entry_type=dr.DeviceEntryType.SERVICE,
         )
 
-    async def _async_handle_chat_log(
+class GroqToolParam(TypedDict):
+    type: Literal["browser_search", "code_interpreter"]
+
+ToolParam = Union[
+    GroqToolParam,
+    ChatCompletionFunctionToolParam  # si usás funciones también
+]
+
+async def _async_handle_chat_log(
         self,
         chat_log: conversation.ChatLog,
         structure_name: str | None = None,
@@ -293,20 +301,16 @@ class CustomOpenAIBaseLLMEntity(Entity):
         """Generate an answer for the chat log."""
         options = self.subentry.data
 
-        tools: list[ChatCompletionFunctionToolParam] | None = None
+        tools: list[ToolParam] | None = None
         if chat_log.llm_api:
             tools = [
                 _format_tool(tool, chat_log.llm_api.custom_serializer)
                 for tool in chat_log.llm_api.tools
             ]
             if options.get(CONF_BROWSER_SEARCH_ENABLED):
-                tools.append({"type": "browser_search", "function": {
-                    "name": "browser_search",
-                    "description": "browser_search"}})
+                tools.append({"type": "browser_search"})
             if options.get(CONF_CODE_INTERPRETER_ENABLED):
-                tools.append({"type": "code_interpreter", "function": {
-                    "name": "code_interpreter",
-                    "description": "code_interpreter"}})
+                tools.append({"type": "code_interpreter"})
 
         model = options.get(CONF_CHAT_MODEL, RECOMMENDED_CHAT_MODEL)
         messages = [
