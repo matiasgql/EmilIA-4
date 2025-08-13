@@ -112,7 +112,7 @@ def _convert_content_to_chat_message(
         )
         if isinstance(content, conversation.AssistantContent) and content.tool_calls:
             param["tool_calls"] = [
-                ChatCompletionMessageToolCallParam(
+                ChatCompletionMessageFunctionToolCall(
                     type="function",
                     id=tool_call.id,
                     function=Function(
