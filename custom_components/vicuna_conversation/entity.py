@@ -24,7 +24,7 @@ from openai.types.chat import (
     ChatCompletionFunctionToolParam,
     ChatCompletionUserMessageParam,
 )
-from openai.types.chat.chat_completion_message_function_tool_call import Function
+from openai.types.chat.chat_completion_message_function_tool_call_param import Function
 from openai.types.shared_params import FunctionDefinition
 import voluptuous as vol
 from voluptuous_openapi import convert
