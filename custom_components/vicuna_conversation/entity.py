@@ -264,6 +264,13 @@ async def _transform_stream(
             "tool_args": delta_tool_call.function.arguments or "",
         }
 
+class GroqToolParam(TypedDict):
+    type: Literal["browser_search", "code_interpreter"]
+
+ToolParam = Union[
+    GroqToolParam,
+    ChatCompletionFunctionToolParam  # si usás funciones también
+]
 
 class CustomOpenAIBaseLLMEntity(Entity):
     """Custom OpenAI base LLM entity."""
@@ -284,15 +291,7 @@ class CustomOpenAIBaseLLMEntity(Entity):
             entry_type=dr.DeviceEntryType.SERVICE,
         )
 
-class GroqToolParam(TypedDict):
-    type: Literal["browser_search", "code_interpreter"]
-
-ToolParam = Union[
-    GroqToolParam,
-    ChatCompletionFunctionToolParam  # si usás funciones también
-]
-
-async def _async_handle_chat_log(
+    async def _async_handle_chat_log(
         self,
         chat_log: conversation.ChatLog,
         structure_name: str | None = None,
