@@ -349,7 +349,7 @@ class CustomOpenAIBaseLLMEntity(Entity):
 
         for _iteration in range(MAX_TOOL_ITERATIONS):
             try:
-                if CONF_REASONING == "NO":
+                if CONF_CHAT_MODEL == "openai/gpt-oss-120b":
                     result = await client.chat.completions.create(
                         model=model,
                         messages=messages,
