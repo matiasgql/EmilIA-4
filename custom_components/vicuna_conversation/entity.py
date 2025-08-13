@@ -148,8 +148,9 @@ async def _transform_response(
                 id=tool_call.id,
                 tool_name=tool_call.function.name,
                 tool_args=_decode_tool_arguments(tool_call.function.arguments),
-            ) if isinstance(tool_call, ChatCompletionMessageToolCallParam) else None
+            )
             for tool_call in message.tool_calls
+                if hasattr(tool_call, "function")
         ]
     yield data
 
@@ -299,9 +300,13 @@ class CustomOpenAIBaseLLMEntity(Entity):
                 for tool in chat_log.llm_api.tools
             ]
             if options.get(CONF_BROWSER_SEARCH_ENABLED):
-                tools.append({"type": "browser_search"})
+                tools.append({"type": "browser_search", "function": {
+                    "name": "browser_search",
+                    "description": "browser_search"}})
             if options.get(CONF_CODE_INTERPRETER_ENABLED):
-                tools.append({"type": "code_interpreter"})
+                tools.append({"type": "code_interpreter", "function": {
+                    "name": "code_interpreter",
+                    "description": "code_interpreter"}})
 
         model = options.get(CONF_CHAT_MODEL, RECOMMENDED_CHAT_MODEL)
         messages = [
