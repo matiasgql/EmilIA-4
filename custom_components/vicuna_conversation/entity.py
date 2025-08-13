@@ -112,7 +112,7 @@ def _convert_content_to_chat_message(
         )
         if isinstance(content, conversation.AssistantContent) and content.tool_calls:
             param["tool_calls"] = [
-                ChatCompletionMessageFunctionToolCall(
+                ChatCompletionMessageToolCallParam(
                     type="function",
                     id=tool_call.id,
                     function=Function(
@@ -149,7 +149,7 @@ async def _transform_response(
                 id=tool_call.id,
                 tool_name=tool_call.function.name,
                 tool_args=_decode_tool_arguments(tool_call.function.arguments),
-            ) if isinstance(tool_call, ChatCompletionMessageFunctionToolCall) else None
+            ) if isinstance(tool_call, ChatCompletionMessageToolCallParam) else None
             for tool_call in message.tool_calls
         ]
     yield data
